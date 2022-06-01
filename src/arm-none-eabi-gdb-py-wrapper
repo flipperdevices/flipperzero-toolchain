@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# unofficial strict mode
+set -eu;
+
+# vars
+SCRIPT_PATH="$(dirname -- "$(readlink -f -- "$0")")";
+PY_HOME="$(cd "$SCRIPT_PATH/../python" && pwd)";
+LD_PATH="$PY_HOME/lib";
+
+# run original gdb with local python
+LD_LIBRARY_PATH="$LD_PATH" PYTHONHOME="$PY_HOME" $SCRIPT_PATH/arm-none-eabi-gdb-py-bin $*
