@@ -62,7 +62,7 @@
     # we use shell command cause Ansible's unarchive module don't support *.bz2 format
     - name: Unpack toolchain sources
       shell:
-        cmd: "tar -xjf {{ src_filename }} -C {{ work_dir }}"
+        cmd: "tar -xjf {{ work_dir }}/{{ src_filename }} -C {{ work_dir }}"
         warn: false
 
     - name: Build toolchain (x86_64-linux)
