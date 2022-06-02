@@ -8,4 +8,4 @@ SCRIPT_PATH="$(dirname -- "$(readlink -f -- "$0")")";
 PY_HOME="$(cd "$SCRIPT_PATH/../python" && pwd)";
 
 # run original gdb with local python
-LD_LIBRARY_PATH="$PYTHONHOME="$PY_HOME" $SCRIPT_PATH/arm-none-eabi-gdb-py-bin $*
+PYTHONHOME="$PY_HOME" "$SCRIPT_PATH/arm-none-eabi-gdb-py-bin" "$@"
