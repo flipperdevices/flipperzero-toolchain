@@ -5,7 +5,7 @@
   connection: local
   vars:
     src_link: "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10-src.tar.bz2"
-    python_link: "https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tgz"
+    python_link: "https://www.python.org/ftp/python/3.9.13/Python-3.9.13.tgz"
     work_dir: "{{ playbook_dir }}/src"
     unpack_dir: "{{ work_dir }}/unpack"
     out_dir: "{{ playbook_dir }}/build"
@@ -54,6 +54,25 @@
         - "{{ unpack_dir }}"
         - "{{ out_dir }}"
 
+    - name: Download Python sources
+      get_url:
+        url: "{{ python_link }}"
+        dest: "{{ work_dir }}/{{ python_filename }}"
+
+    - name: Unpack python sources
+      unarchive:
+        src: "{{ work_dir }}/{{ python_filename }}"
+        dest: "{{ unpack_dir }}"
+
+    - name: Build python (x86_64-linux)
+      shell: |
+        ./configure --prefix="{{ work_dir }}/python"
+        make "-j{{ ansible_processor_vcpus }}"
+        make install
+      become: true
+      args:
+        chdir: "{{ unpack_dir }}/{{ python_dirname }}"
+
     - name: Download toolchain sources
       get_url:
         url: "{{ src_link }}"
@@ -65,8 +84,16 @@
         cmd: "tar -xjf {{ work_dir }}/{{ src_filename }} -C {{ work_dir }}"
         warn: false
 
+    - name: Patch build-toolchain.sh
+      replace:
+        path: "{{ work_dir }}/{{ src_dirname }}/build-toolchain.sh"
+        regexp: "--with-python=yes"
+        replace: "--with-python={{ work_dir }}/python/bin/python3"
+
+    # to compile gdb with custom Python, it need to be in PATH for compilation time
     - name: Build toolchain (x86_64-linux)
       shell: |
+        export PATH="{{ work_dir }}/python/bin:$PATH"
         ./install-sources.sh --skip_steps=mingw32
         ./build-prerequisites.sh --skip_steps=mingw32
         ./build-toolchain.sh --skip_steps=mingw32
@@ -94,24 +121,10 @@
     - set_fact:
         x86_64_linux_toolchain_dir: "{{ unpack_dir }}/{{ x86_64_linux_toolchain_tar | basename | split('-x86_64-linux') | first }}"
 
-    - name: Download Python sources
-      get_url:
-        url: "{{ python_link }}"
-        dest: "{{ work_dir }}/{{ python_filename }}"
-
-    - name: Unpack python sources
-      unarchive:
-        src: "{{ work_dir }}/{{ python_filename }}"
-        dest: "{{ unpack_dir }}"
-
-    - name: Build python (x86_64-linux)
-      shell: |
-        ./configure --prefix="{{ x86_64_linux_toolchain_dir }}/python" --with-threads --enable-shared --enable-unicode=ucs4
-        make -s "-j{{ ansible_processor_vcpus }}"
-        make install
-      become: true
-      args:
-        chdir: "{{ unpack_dir }}/{{ python_dirname }}"
+    - name: Copy our Python to toolchain (x86_64-linux)
+      copy:
+        src: "{{ work_dir }}/python"
+        dest: "{{ x86_64_linux_toolchain_dir }}"
 
     - name: Rename original arm-none-eabi-gdb-py to arm-none-eabi-gdb-py-bin (x86_64-linux)
       copy:
