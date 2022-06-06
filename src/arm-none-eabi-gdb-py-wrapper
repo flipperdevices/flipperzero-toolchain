@@ -6,6 +6,7 @@ set -eu;
 # vars
 SCRIPT_PATH="$(dirname -- "$(readlink -f -- "$0")")";
 PY_HOME="$(cd "$SCRIPT_PATH/../python" && pwd)";
+LIB_CURSES_PATH="$(cd "$SCRIPT_PATH/../ncurses/lib" && pwd)";
 
-# run original gdb with local python
-PYTHONHOME="$PY_HOME" "$SCRIPT_PATH/arm-none-eabi-gdb-py-bin" "$@"
+# run original gdb-py with local python and our ncurses lib
+LD_LIBRARY_PATH="$LIB_CURSES_PATH" PYTHONHOME="$PY_HOME" "$SCRIPT_PATH/arm-none-eabi-gdb-py-bin" "$@"

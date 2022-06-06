@@ -6,6 +6,7 @@
   vars:
     src_link: "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10-src.tar.bz2"
     python_link: "https://www.python.org/ftp/python/3.9.13/Python-3.9.13.tgz"
+    ncurses_link: "https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.2.tar.gz"
     work_dir: "{{ playbook_dir }}/src"
     unpack_dir: "{{ work_dir }}/unpack"
     out_dir: "{{ playbook_dir }}/build"
@@ -13,6 +14,8 @@
     src_dirname: "{{ src_filename.split('-src') | first }}"
     python_filename: "{{ python_link | basename }}"
     python_dirname: "{{ python_filename.split('.tgz') | first }}"
+    ncurses_filename: "{{ ncurses_link | basename }}"
+    ncurses_dirname: "{{ ncurses_filename.split('.tar.gz') | first }}"
   tasks:
     - name: Install build dependences
       become: true
@@ -44,6 +47,8 @@
           - texlive
           - texlive-extra-utils
           - libncurses5-dev
+          - libncursesw6
+          - libncurses-dev
         state: latest
 
     - name: Create work dirs
@@ -72,6 +77,24 @@
       become: true
       args:
         chdir: "{{ unpack_dir }}/{{ python_dirname }}"
+
+    - name: Download ncurses sources
+      get_url:
+        url: "{{ ncurses_link }}"
+        dest: "{{ work_dir }}/{{ ncurses_filename }}"
+
+    - name: Unpack ncurses sources
+      unarchive:
+        src: "{{ work_dir }}/{{ ncurses_filename }}"
+        dest: "{{ unpack_dir }}"
+
+    - name: Build ncurses (x86_64-linux)
+      shell: |
+        ./configure --with-shared --enable-widec --with-versioned-syms --prefix="{{ work_dir }}/ncurses"
+        make "-j{{ ansible_processor_vcpus }}"
+        make install
+      args:
+        chdir: "{{ unpack_dir }}/{{ ncurses_dirname }}"
 
     - name: Download toolchain sources
       get_url:
@@ -117,13 +140,21 @@
         cmd: "tar -xjf {{ x86_64_linux_toolchain_tar }} -C {{ unpack_dir }}"
         warn: false
 
-    # to make it define in single line we need Ansible version >=2.11
+    # we can use variable output only on next task..
     - set_fact:
-        x86_64_linux_toolchain_dir: "{{ unpack_dir }}/{{ x86_64_linux_toolchain_tar | basename | split('-x86_64-linux') | first }}"
+        x86_64_linux_toolchain_dir: "{{ x86_64_linux_toolchain_tar | basename }}"
+
+    - set_fact:
+        x86_64_linux_toolchain_dir: "{{ unpack_dir }}/{{ x86_64_linux_toolchain_dir.split('-x86_64-linux') | first }}"
 
     - name: Copy our Python to toolchain (x86_64-linux)
       copy:
         src: "{{ work_dir }}/python"
+        dest: "{{ x86_64_linux_toolchain_dir }}"
+
+    - name: Copy our ncurses to toolchain (x86_64-linux)
+      copy:
+        src: "{{ work_dir }}/ncurses"
         dest: "{{ x86_64_linux_toolchain_dir }}"
 
     - name: Rename original arm-none-eabi-gdb-py to arm-none-eabi-gdb-py-bin (x86_64-linux)
@@ -132,10 +163,22 @@
         dest: "{{ x86_64_linux_toolchain_dir }}/bin/arm-none-eabi-gdb-py-bin"
         mode: "0755"
 
+    - name: Rename original arm-none-eabi-gdb to arm-none-eabi-gdb-bin (x86_64-linux)
+      copy:
+        src: "{{ x86_64_linux_toolchain_dir }}/bin/arm-none-eabi-gdb"
+        dest: "{{ x86_64_linux_toolchain_dir }}/bin/arm-none-eabi-gdb-bin"
+        mode: "0755"
+
     - name: Add arm-none-eabi-gdb-py wrapper (x86_64-linux)
       copy:
         src: "{{ work_dir }}/arm-none-eabi-gdb-py-wrapper"
         dest: "{{ x86_64_linux_toolchain_dir }}/bin/arm-none-eabi-gdb-py"
+        mode: "0755"
+
+    - name: Add arm-none-eabi-gdb wrapper (x86_64-linux)
+      copy:
+        src: "{{ work_dir }}/arm-none-eabi-gdb-wrapper"
+        dest: "{{ x86_64_linux_toolchain_dir }}/bin/arm-none-eabi-gdb"
         mode: "0755"
 
     - name: Pack patched toolchain (x86_64-linux)
