@@ -12,7 +12,7 @@
     ncurses_link: "https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.2.tar.gz"
     protobuf_link: "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.1/protobuf-cpp-3.20.1.tar.gz"
     libtool_link: "https://ftpmirror.gnu.org/libtool/libtool-2.4.6.tar.gz"
-    imagemagick_link: "https://download.imagemagick.org/ImageMagick/download/ImageMagick-7.1.0-37.tar.gz"
+    heatshrink_link: "https://github.com/atomicobject/heatshrink/archive/refs/heads/master.zip"
     src_filename: "{{ src_link | basename }}"
     src_dirname: "{{ src_filename.split('-src') | first }}"
     python_filename: "{{ python_link | basename }}"
@@ -28,20 +28,18 @@
     libtool_filename: "{{ libtool_link | basename }}"
     libtool_dirname: "{{ libtool_filename.split('.tar.gz') | first }}"
     libtool_configure_args: ""
-    imagemagick_filename: "{{ imagemagick_link | basename }}"
-    imagemagick_dirname: "{{ imagemagick_filename.split('.tar.gz') | first }}"
-    imagemagick_configure_args: "--enable-shared --enable-static --disable-ltdl-install --without-dps --with-ttf --with-bzlib --with-jpeg --with-png --with-tiff --with-zlib --with-modules --with-xml --without-x --without-perl --without-fpx --without-gslib --without-jbig --without-jp2 --without-lcms --without-wmf --without-gvc --disable-dependency-tracking --enable-osx-universal-binary --disable-openmp"
+    heatshrink_filename: "heatshrink-master.zip"
+    heatshrink_dirname: "{{ heatshrink_filename.split('.zip') | first }}"
     tools_to_add:
       - "python"
       - "ncurses"
       - "protobuf"
       - "libtool"
-      - "imagemagick"
+      - "heatshrink"
     wrappers:
       - "bin/arm-none-eabi-gdb-py"
       - "bin/arm-none-eabi-gdb"
       - "protobuf/bin/protoc"
-      - "imagemagick/bin/convert"
 
   tasks:
     - name: Install build dependences
@@ -77,6 +75,7 @@
           - libncursesw6
           - libncurses-dev
           - libtool
+          - golang
         state: latest
 
     - name: Create work dirs
@@ -91,7 +90,6 @@
       get_url:
         url: "{{ lookup('vars', item ~ '_link') }}"
         dest: "{{ work_dir }}/{{ lookup('vars', item ~ '_filename') }}"
-        timeout: 40 # ImageMagick's upstream is too slow
       with_items: "{{ tools_to_add }}"
 
     - name: Unpack tools sources
@@ -108,13 +106,24 @@
       args:
         chdir: "{{ unpack_dir }}/{{ lookup('vars', item ~ '_dirname') }}"
       with_items: "{{ tools_to_add }}"
+      when: item != "heatshrink"
+
+    # heatshrink has no configure and don't need "make install"
+    - name: Build heatshrink (x86_64-linux)
+      shell:
+        cmd: "make -j{{ ansible_processor_vcpus }}"
+      args:
+        chdir: "{{ unpack_dir }}/{{ heatshrink_dirname }}"
+
+    - name: (GOLANG) Build png2xbm (x86_64-linux)
+      shell:
+        cmd: "go build png2xbm.go"
+      args:
+        chdir: "{{ work_dir }}/png2xbm"
 
     - name: Install python libs
-      shell: |
-        ./python3 -m pip install protobuf=="{{ protobuf_version }}"
-      args:
-        chdir: "{{ work_dir }}/python/bin"
-
+      shell:
+        cmd: "{{ work_dir }}/python/bin/python3 -m pip install protobuf=={{ protobuf_version }}"
     - name: Download toolchain sources
       get_url:
         url: "{{ src_link }}"
@@ -171,6 +180,19 @@
       shell:
         cmd: "mv {{ work_dir }}/{{ item }} {{ x86_64_linux_toolchain_dir }}/"
       with_items: "{{ tools_to_add }}"
+      when: item != "heatshrink"
+
+    - name: Copy heatshrink to toolchain bin
+      copy:
+        src: "{{ unpack_dir }}/{{ heatshrink_dirname }}/heatshrink"
+        dest: "{{ x86_64_linux_toolchain_dir }}/bin"
+        mode: 0755
+
+    - name: Copy png2xbm to toolchain bin
+      copy:
+        src: "{{ work_dir }}/png2xbm/png2xbm"
+        dest: "{{ x86_64_linux_toolchain_dir }}/bin"
+        mode: 0755
 
     - name: Backup original binnaries (x86_64-linux)
       copy:
