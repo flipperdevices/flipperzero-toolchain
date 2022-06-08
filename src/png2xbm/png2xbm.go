@@ -36,31 +36,19 @@ func Encode(img image.Image) {
 	width := img.Bounds().Dx()
 	height := img.Bounds().Dy()
 
-	maskIndex := 0
-	masks := []uint8{
-		0x1,
-		0x2,
-		0x4,
-		0x8,
-		0x10,
-		0x20,
-		0x40,
-		0x80,
-	}
-
 	var pixels []byte
 	var pixel uint8
 	for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
+	    maskIndex := 0
 		for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
 			c := img.At(x, y)
 			grayColor := color.GrayModel.Convert(c).(color.Gray)
 			value := grayColor.Y
 			if value <= byte(float64(256)*0.5) {
-				// white
-				pixel |= masks[maskIndex]
+				pixel |= (1 << maskIndex)
 			}
 			maskIndex++
-			if maskIndex == len(masks) {
+			if maskIndex == 7 {
 				maskIndex = 0
 				pixels = append(pixels, pixel)
 				pixel = 0
