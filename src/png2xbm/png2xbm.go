@@ -52,11 +52,15 @@ func Encode(img image.Image) {
 				c = color.White
 			}
 
+			_, _, _, a := c.RGBA()
+			a = a>>8
+
 			grayColor := color.GrayModel.Convert(c).(color.Gray)
 			value := grayColor.Y
-			if value <= byte(float64(256)*0.5) {
+			if value <= byte(float64(256) * 0.5) && a >= uint32(0xFF / 2) {
 				pixel |= (1 << maskIndex)
 			}
+
 			maskIndex++
 			if maskIndex == 8 {
 				maskIndex = 0
