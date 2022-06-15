@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# unofficial strict mode
+set -eu;
+
+# vars
+SCRIPT_PATH="$(dirname -- "$(readlink -f -- "$0")")";
+LIB_CURSES_PATH="$(cd "$SCRIPT_PATH/../ncurses/lib" && pwd)";
+
+# run original gdb with out ncurses lib
+LD_LIBRARY_PATH="$LIB_CURSES_PATH" "$SCRIPT_PATH/arm-none-eabi-gdb-bin" "$@"
