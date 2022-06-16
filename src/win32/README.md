@@ -2,7 +2,7 @@
 
 To compile win32 toolchain we need pre-compiled python and pre-downloaded libs..
 
-1. python.tar.gz - Clean pre-compiled win32 Python 3.9.9.
+1. python.tar.gz - clean pre-compiled win32 Python 3.9.9.
     Way to create under Linux:
     ```bash
     wget https://sourceforge.net/projects/portable-python/files/Portable%20Python%203.9/Portable%20Python-3.9.9.exe -O python.exe
@@ -11,7 +11,7 @@ To compile win32 toolchain we need pre-compiled python and pre-downloaded libs..
     tar cvf python.tar.gz python
     rm -rf python.exe py_temp python
     ```
-2. python-libs.tar.gz - Pre-downloaded Python3 libs needed by Flipper Toolchain
+2. python-libs.tar.gz - pre-downloaded Python3 libs needed by Flipper Toolchain
     Worst way to create under Windows:
     1. Open Git Bash and unpack python.tar.gz
     2. `cd python git init && git add . && git commit -m "init"`
@@ -19,3 +19,4 @@ To compile win32 toolchain we need pre-compiled python and pre-downloaded libs..
     4. Add all files from `git diff` output to archive
 
 3. python-config.sh - custom script for GDB configure
+4. protoc-21.1-win32.zip - pre-compiled win32 Protobuf, downloaded from https://github.com/protocolbuffers/protobuf/releases/download/v21.1/protoc-21.1-win32.zip

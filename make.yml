@@ -82,6 +82,11 @@
           - binutils-mingw-w64-i686
         state: latest
 
+    - name: Clean old builds
+      file:
+        path: "{{ out_dir }}"
+        state: absent
+
     - name: Create work dirs
       file:
         path: "{{ item }}"
@@ -90,6 +95,8 @@
         - "{{ work_dir }}"
         - "{{ unpack_dir }}"
         - "{{ out_dir }}"
+        - "{{ work_dir }}/win32"
+        - "{{ unpack_dir }}/win32"
 
     - name: Download tools sources
       get_url:
@@ -120,12 +127,6 @@
       args:
         chdir: "{{ unpack_dir }}/{{ heatshrink_dirname }}"
 
-    - name: (GOLANG) Build png2xbm (x86_64-linux)
-      shell:
-        cmd: "go build -o {{ work_dir }}/png2xbm png2xbm.go"
-      args:
-        chdir: "{{ src_dir }}/unix/png2xbm"
-
     - name: Unpack pre-compiled python (i686-windows)
       unarchive:
         src: "{{ src_dir }}/win32/python.tar.gz"  # TODO(drunkbatya): upload to server?
@@ -135,6 +136,16 @@
       unarchive:
         src: "{{ src_dir }}/win32/python-libs.tar.gz"  # TODO(drunkbatya): upload to server?
         dest: "{{ work_dir }}/win32/python"
+
+    - name: Create protoc directory (i686-windows)
+      file:
+        path: "{{ work_dir }}/win32/protoc"
+        state: directory
+
+    - name: Unpack pre-compiled protoc (i686-windows)
+      unarchive:
+        src: "{{ src_dir }}/win32/protoc-21.1-win32.zip"
+        dest: "{{ work_dir }}/win32/protoc"
 
     - name: Install python libs (x86_64-linux)
       shell:
@@ -169,7 +180,7 @@
         ./install-sources.sh
         ./build-prerequisites.sh
         ./build-toolchain.sh
-      become: true
+        #       become: true
       args:
         chdir: "{{ work_dir }}/{{ src_dirname }}"
 
@@ -225,15 +236,13 @@
         dest: "{{ x86_64_linux_toolchain_dir }}/bin"
         mode: 0755
 
-    - name: Copy png2xbm to toolchain bin dir (x86_64-linux)
-      copy:
-        src: "{{ work_dir }}/png2xbm"
-        dest: "{{ x86_64_linux_toolchain_dir }}/bin"
-        mode: 0755
-
     - name: Copy complete python to toolchain (i686-windows)
       shell:
         cmd: "mv {{ work_dir }}/win32/python {{ i686_windows_toolchain_dir }}/"
+
+    - name: Copy protoc to toolchain (i686-windows)
+      shell:
+        cmd: "mv {{ work_dir }}/win32/protoc {{ i686_windows_toolchain_dir }}/"
 
     - name: Backup original binnaries (x86_64-linux)
       copy:
@@ -243,31 +252,32 @@
       with_items: "{{ wrappers }}"
 
     - name: Backup original binnaries (i686-windows)
-      copy:
-        src: "{{ i686_windows_toolchain_dir }}/bin/arm-none-eabi-gdb-py.exe"
-        dest: "{{ i686_windows_toolchain_dir }}/bin/arm-none-eabi-gdb-py-bin.exe"
+      shell:
+        cmd: "mv arm-none-eabi-gdb-py.exe arm-none-eabi-gdb-py-bin.exe"
+      args:
+        chdir: "{{ i686_windows_toolchain_dir }}/bin"
 
     - name: Add wrappers (x86_64-linux)
       copy:
-        src: "{{ src_dir }}/{{ unix }}/wrappers/{{ item | basename }}-wrapper"
+        src: "{{ src_dir }}/unix/wrappers/{{ item | basename }}-wrapper"
         dest: "{{ x86_64_linux_toolchain_dir }}/{{ item }}"
         mode: 0755
       with_items: "{{ wrappers }}"
 
     - name: Add wrappers (i686-windows)
       copy:
-        src: "{{ src_dir }}/{{ unix }}/wrappers/arm-none-eabi-gdb-py-wrapper.bat"
+        src: "{{ src_dir }}/win32/wrappers/arm-none-eabi-gdb-py-wrapper.bat"
         dest: "{{ i686_windows_toolchain_dir }}/bin/arm-none-eabi-gdb-py.bat"
 
     - name: Pack patched toolchain (x86_64-linux)
       archive:
         path: "{{ x86_64_linux_toolchain_dir }}"
-        dest: "{{ out_dir }}/{{ x86_64_linux_toolchain_tar | basename | regex_replace('.tar.bz2', '.tar.gz') }}"
+        dest: "{{ out_dir }}/{{ x86_64_linux_toolchain_tar | basename | regex_replace('x86_64-linux', 'x86_64-linux-flipper') | regex_replace('.tar.bz2', '.tar.gz') }}"
 
     - name: Pack patched toolchain (i686-windows)
       archive:
         path: "{{ i686_windows_toolchain_dir }}"
-        dest: "{{ out_dir }}/{{ i686_windows_toolchain_zip | basename }}"
+        dest: "{{ out_dir }}/{{ i686_windows_toolchain_zip | basename | regex_replace('win32', 'win32-flipper') }}"
         format: zip
 
     - name: Clean temp files
