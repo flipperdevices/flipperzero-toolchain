@@ -13,7 +13,6 @@
     ncurses_link: "https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.2.tar.gz"
     protobuf_link: "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.1/protobuf-cpp-3.20.1.tar.gz"
     libtool_link: "https://ftpmirror.gnu.org/libtool/libtool-2.4.6.tar.gz"
-    heatshrink_link: "https://github.com/atomicobject/heatshrink/archive/refs/heads/master.zip"
     src_filename: "{{ src_link | basename }}"
     src_dirname: "{{ src_filename.split('-src') | first }}"
     python_filename: "{{ python_link | basename }}"
@@ -29,14 +28,15 @@
     libtool_filename: "{{ libtool_link | basename }}"
     libtool_dirname: "{{ libtool_filename.split('.tar.gz') | first }}"
     libtool_configure_args: ""
-    heatshrink_filename: "heatshrink-master.zip"
-    heatshrink_dirname: "{{ heatshrink_filename.split('.zip') | first }}"
+    openocd_linux_filename: "xpack-openocd-0.11.0-2-linux-x64.tar.gz"
+    openocd_linux_dirname: "{{ openocd_linux_filename.split('-linux-x64.tar.gz') | first }}"
+    openocd_win32_filename: "xpack-openocd-0.11.0-2-win32-ia32.zip"
+    openocd_win32_dirname: "{{ openocd_win32_filename.split('-win32-ia32.zip') | first }}"
     tools_to_add:
       - "python"
       - "ncurses"
       - "protobuf"
       - "libtool"
-      - "heatshrink"
     wrappers:
       - "bin/arm-none-eabi-gdb-py"
       - "bin/arm-none-eabi-gdb"
@@ -76,7 +76,6 @@
           - libncursesw6
           - libncurses-dev
           - libtool
-          - golang
           - gcc-mingw-w64-i686
           - g++-mingw-w64-i686
           - binutils-mingw-w64-i686
@@ -118,14 +117,11 @@
       args:
         chdir: "{{ unpack_dir }}/{{ lookup('vars', item ~ '_dirname') }}"
       with_items: "{{ tools_to_add }}"
-      when: item != "heatshrink"
 
-    # heatshrink has no configure and don't need "make install"
-    - name: Build heatshrink (x86_64-linux)
-      shell:
-        cmd: "make -j{{ ansible_processor_vcpus }}"
-      args:
-        chdir: "{{ unpack_dir }}/{{ heatshrink_dirname }}"
+    - name: Unpack pre-compiled openocd (x86_64-linux)
+      unarchive:
+        src: "{{ src_dir }}/win32/{{ openocd_linux_filename }}"
+        dest: "{{ work_dir }}/"
 
     - name: Unpack pre-compiled python (i686-windows)
       unarchive:
@@ -146,6 +142,11 @@
       unarchive:
         src: "{{ src_dir }}/win32/protoc-21.1-win32.zip"
         dest: "{{ work_dir }}/win32/protoc"
+
+    - name: Unpack pre-compiled openocd (i686-windows)
+      unarchive:
+        src: "{{ src_dir }}/win32/xpack-openocd-0.11.0-2-win32-ia32.zip"
+        dest: "{{ work_dir }}/win32/"
 
     - name: Install python libs (x86_64-linux)
       shell:
@@ -224,25 +225,26 @@
         i686_windows_toolchain_dir: "{{ unpack_dir }}/win32/{{ i686_windows_toolchain_dir.split('-win32') | first }}"
 
     # cmd is more faster than Ansible copy module
-    - name: Copy our packages and libs to toolchain (x86_64-linux)
+    - name: Add our packages and libs to toolchain (x86_64-linux)
       shell:
         cmd: "mv {{ work_dir }}/{{ item }} {{ x86_64_linux_toolchain_dir }}/"
       with_items: "{{ tools_to_add }}"
-      when: item != "heatshrink"
 
-    - name: Copy heatshrink to toolchain bin dir (x86_64-linux)
-      copy:
-        src: "{{ unpack_dir }}/{{ heatshrink_dirname }}/heatshrink"
-        dest: "{{ x86_64_linux_toolchain_dir }}/bin"
-        mode: 0755
+    - name: Add openocd to toolchain (x86_64-linux)
+      shell:
+        cmd: "mv {{ work_dir }}/{{ openocd_linux_dirname }} {{ x86_64_linux_toolchain_dir }}/openocd"
 
-    - name: Copy complete python to toolchain (i686-windows)
+    - name: Add complete python to toolchain (i686-windows)
       shell:
         cmd: "mv {{ work_dir }}/win32/python {{ i686_windows_toolchain_dir }}/"
 
-    - name: Copy protoc to toolchain (i686-windows)
+    - name: Add protoc to toolchain (i686-windows)
       shell:
         cmd: "mv {{ work_dir }}/win32/protoc {{ i686_windows_toolchain_dir }}/"
+
+    - name: Add  openocd to toolchain (i686-windows)
+      shell:
+        cmd: "mv {{ work_dir }}/win32/{{ openocd_win32_dirname }} {{ i686_windows_toolchain_dir }}/openocd"
 
     - name: Backup original binnaries (x86_64-linux)
       copy:
@@ -254,6 +256,7 @@
     - name: Backup original binnaries (i686-windows)
       shell:
         cmd: "mv arm-none-eabi-gdb-py.exe arm-none-eabi-gdb-py-bin.exe"
+        creates: "{{ i686_windows_toolchain_dir }}/bin/arm-none-eabi-gdb-py-bin.exe"
       args:
         chdir: "{{ i686_windows_toolchain_dir }}/bin"
 
