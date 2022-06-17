@@ -28,9 +28,9 @@
     libtool_filename: "{{ libtool_link | basename }}"
     libtool_dirname: "{{ libtool_filename.split('.tar.gz') | first }}"
     libtool_configure_args: ""
-    openocd_linux_filename: "xpack-openocd-0.11.0-2-linux-x64.tar.gz"
+    openocd_linux_filename: "xpack-openocd-0.11.0-3-linux-x64.tar.gz"
     openocd_linux_dirname: "{{ openocd_linux_filename.split('-linux-x64.tar.gz') | first }}"
-    openocd_win32_filename: "xpack-openocd-0.11.0-2-win32-ia32.zip"
+    openocd_win32_filename: "xpack-openocd-0.11.0-3-win32-ia32.zip"
     openocd_win32_dirname: "{{ openocd_win32_filename.split('-win32-ia32.zip') | first }}"
     tools_to_add:
       - "python"
@@ -83,8 +83,11 @@
 
     - name: Clean old builds
       file:
-        path: "{{ out_dir }}"
+        path: "{{ item }}"
         state: absent
+      loop:
+        - "{{ work_dir }}"
+        - "{{ out_dir }}"
 
     - name: Create work dirs
       file:

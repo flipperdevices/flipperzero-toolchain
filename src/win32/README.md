@@ -20,4 +20,4 @@ To compile win32 toolchain we need pre-compiled python and pre-downloaded libs..
 
 3. python-config.sh - custom script for GDB configure
 4. protoc-21.1-win32.zip - pre-compiled win32 Protobuf, downloaded from https://github.com/protocolbuffers/protobuf/releases/download/v21.1/protoc-21.1-win32.zip
-5. pre-compiled xpack-openocd-0.11.0-2, downloaded from https://github.com/xpack-dev-tools/openocd-xpack/releases/download/v0.11.0-2/xpack-openocd-0.11.0-2-win32-ia32.zip
+5. pre-compiled xpack-openocd-0.11.0-3, downloaded from https://github.com/xpack-dev-tools/openocd-xpack/releases/download/v0.11.0-3/xpack-openocd-0.11.0-3-win32-ia32.zip
