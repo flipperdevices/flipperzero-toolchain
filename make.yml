@@ -120,7 +120,7 @@
 
     - name: Unpack pre-compiled openocd (x86_64-linux)
       unarchive:
-        src: "{{ src_dir }}/win32/{{ openocd_linux_filename }}"
+        src: "{{ src_dir }}/unix/{{ openocd_linux_filename }}"
         dest: "{{ work_dir }}/"
 
     - name: Unpack pre-compiled python (i686-windows)
