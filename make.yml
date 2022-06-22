@@ -17,7 +17,7 @@
     src_dirname: "{{ src_filename.split('-src') | first }}"
     python_filename: "{{ python_link | basename }}"
     python_dirname: "{{ python_filename.split('.tgz') | first }}"
-    python_configure_args: ""
+    python_configure_args: "--enable-shared"
     ncurses_filename: "{{ ncurses_link | basename }}"
     ncurses_dirname: "{{ ncurses_filename.split('.tar.gz') | first }}"
     ncurses_configure_args: "--with-shared --enable-widec --with-versioned-syms"
@@ -41,6 +41,7 @@
       - "bin/arm-none-eabi-gdb-py"
       - "bin/arm-none-eabi-gdb"
       - "protobuf/bin/protoc"
+      - "python/bin/python3.9"
 
   tasks:
     - name: Install build dependences
@@ -148,7 +149,7 @@
 
     - name: Unpack pre-compiled openocd (i686-windows)
       unarchive:
-        src: "{{ src_dir }}/win32/xpack-openocd-0.11.0-2-win32-ia32.zip"
+        src: "{{ src_dir }}/win32/{{ openocd_win32_filename }}"
         dest: "{{ work_dir }}/win32/"
 
     - name: Install python libs (x86_64-linux)
@@ -270,6 +271,19 @@
         mode: 0755
       with_items: "{{ wrappers }}"
 
+    - name: Fix interpreter in python/bin scripts (x86_64-linux)
+      replace:
+        path: "{{ x86_64_linux_toolchain_dir }}/python/bin/{{ item }}"
+        path: "{{ work_dir }}/{{ src_dirname }}/build-toolchain.sh"
+        regexp: "#!{{ work_dir }}/python/bin/python3.9"
+        replace: "#!/usr/bin/env python3"
+      loop:
+        - idle3.9
+        - 2to3-3.9
+        - pip3
+        - pip3.9
+        - pydoc3.9
+
     - name: Add wrappers (i686-windows)
       copy:
         src: "{{ src_dir }}/win32/wrappers/arm-none-eabi-gdb-py-wrapper.bat"
@@ -283,7 +297,7 @@
     - name: Pack patched toolchain (i686-windows)
       archive:
         path: "{{ i686_windows_toolchain_dir }}"
-        dest: "{{ out_dir }}/{{ i686_windows_toolchain_zip | basename | regex_replace('win32', 'win32-flipper') }}"
+        dest: "{{ out_dir }}/{{ i686_windows_toolchain_zip | basename | regex_replace('win32', 'i686-windows-flipper') }}"
         format: zip
 
     - name: Clean temp files
