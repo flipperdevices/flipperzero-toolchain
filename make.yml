@@ -274,7 +274,6 @@
     - name: Fix interpreter in python/bin scripts (x86_64-linux)
       replace:
         path: "{{ x86_64_linux_toolchain_dir }}/python/bin/{{ item }}"
-        path: "{{ work_dir }}/{{ src_dirname }}/build-toolchain.sh"
         regexp: "#!{{ work_dir }}/python/bin/python3.9"
         replace: "#!/usr/bin/env python3"
       loop:

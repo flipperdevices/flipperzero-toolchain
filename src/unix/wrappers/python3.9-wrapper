@@ -5,7 +5,7 @@ set -eu;
 
 # vars
 SCRIPT_PATH="$(dirname -- "$(readlink -f -- "$0")")";
-PY_HOME="$(cd "$SCRIPT_PATH/../python" && pwd)";
+PY_HOME="$(cd "$SCRIPT_PATH/.." && pwd)";
 LIB_PYTHON_PATH="$PY_HOME/lib";
 
-LD_LIBRARY_PATH="$LIB_PYTHON_PATH" PYTHONHOME="$PY_HOME" "$SCRIPT_PATH/bin/python3.9" $*;
+LD_LIBRARY_PATH="$LIB_PYTHON_PATH" PYTHONHOME="$PY_HOME" "$SCRIPT_PATH/python3.9-bin" $*;
