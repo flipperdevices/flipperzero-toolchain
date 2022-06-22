@@ -303,3 +303,7 @@
       file:
         path: "{{ work_dir }}"
         state: absent
+
+    - name: Upload toolchain to server
+      shell:
+        cmd: "rsync -Pav -e \"ssh -p 41337 -i {{ ansible_env.HOME }}/.ssh/server.flipperdevices.com.sec\" {{ out_dir }}/ data@server.flipperdevices.com:/home/data/toolchain/"
