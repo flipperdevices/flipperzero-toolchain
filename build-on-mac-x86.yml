@@ -1,0 +1,199 @@
+#!/usr/local/bin/ansible-playbook
+
+---
+- hosts: 127.0.0.1
+  connection: local
+  vars:
+    src_dir: "{{ playbook_dir }}/src"
+    work_dir: "{{ playbook_dir }}/temp"
+    unpack_dir: "{{ work_dir }}/unpack"
+    out_dir: "{{ playbook_dir }}/build"
+    src_link: "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10-src.tar.bz2"
+    python_link: "https://www.python.org/ftp/python/3.9.9/Python-3.9.9.tgz"
+    ncurses_link: "https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.2.tar.gz"
+    protobuf_link: "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.1/protobuf-cpp-3.20.1.tar.gz"
+    libtool_link: "https://ftpmirror.gnu.org/libtool/libtool-2.4.6.tar.gz"
+    src_filename: "{{ src_link | basename }}"
+    src_dirname: "{{ src_filename.split('-src') | first }}"
+    python_filename: "{{ python_link | basename }}"
+    python_dirname: "{{ python_filename.split('.tgz') | first }}"
+    python_configure_args: ""
+    ncurses_filename: "{{ ncurses_link | basename }}"
+    ncurses_dirname: "{{ ncurses_filename.split('.tar.gz') | first }}"
+    ncurses_configure_args: "--with-shared --enable-widec --with-versioned-syms"
+    protobuf_filename: "{{ protobuf_link | basename }}"
+    protobuf_version: "{{ protobuf_filename.split('-cpp-')[1].split('.tar.gz') | first }}"
+    protobuf_dirname: "protobuf-{{ protobuf_version }}"
+    protobuf_configure_args: ""
+    libtool_filename: "{{ libtool_link | basename }}"
+    libtool_dirname: "{{ libtool_filename.split('.tar.gz') | first }}"
+    libtool_configure_args: ""
+    openocd_darwin_filename: "xpack-openocd-0.11.0-3-darwin-x64.tar.gz"
+    openocd_darwin_dirname: "{{ openocd_darwin_filename.split('-darwin-x64.tar.gz') | first }}"
+    tools_to_add:
+      - "python"
+      - "ncurses"
+      - "protobuf"
+      - "libtool"
+    wrappers:
+      - "bin/arm-none-eabi-gdb-py"
+      - "bin/arm-none-eabi-gdb"
+      - "protobuf/bin/protoc"
+      - "python/bin/python3.9"
+
+  tasks:
+    - name: Install build dependences
+      package:
+        name:
+          - gnu-tar
+          - openssl
+          - readline
+        state: latest
+
+    - name: Clean old builds
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ work_dir }}"
+        - "{{ out_dir }}"
+
+    - name: Create work dirs
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - "{{ work_dir }}"
+        - "{{ unpack_dir }}"
+        - "{{ out_dir }}"
+
+    - name: Download tools sources
+      get_url:
+        url: "{{ lookup('vars', item ~ '_link') }}"
+        dest: "{{ work_dir }}/{{ lookup('vars', item ~ '_filename') }}"
+      with_items: "{{ tools_to_add }}"
+
+    - name: Unpack tools sources
+      unarchive:
+        src: "{{ work_dir }}/{{ lookup('vars', item ~ '_filename') }}"
+        dest: "{{ unpack_dir }}"
+      with_items: "{{ tools_to_add }}"
+
+    - name: Build tools (x86_64-darwin)
+      shell: |
+        export SYSTEM_VERSION_COMPAT=1
+        PKG_CONFIG_PATH="$(brew --prefix openssl)/lib/pkgconfig" \
+        CPPFLAGS="-I$(brew --prefix readline)/include" \
+        LDFLAGS="-L$(brew --prefix readline)/lib" \
+        ./configure "--prefix={{ work_dir }}/{{ item }}" {{ lookup('vars', item ~ '_configure_args') }}
+        make "-j{{ ansible_processor_vcpus }}"
+        make install
+      args:
+        chdir: "{{ unpack_dir }}/{{ lookup('vars', item ~ '_dirname') }}"
+      with_items: "{{ tools_to_add }}"
+
+    - name: Unpack pre-compiled openocd (x86_64-darwin)
+      unarchive:
+        src: "{{ src_dir }}/unix/{{ openocd_linux_filename }}"
+        dest: "{{ work_dir }}/"
+
+    - name: Install python libs (x86_64-darwin)
+      shell:
+        cmd: "{{ work_dir }}/python/bin/python3 -m pip install protobuf=={{ protobuf_version }} pyserial==3.5 heatshrink2==0.11.0 Pillow==9.1.1 python3-protobuf==2.5.0"
+
+    - name: Download toolchain sources
+      get_url:
+        url: "{{ src_link }}"
+        dest: "{{ work_dir }}/{{ src_filename }}"
+
+    # we use shell command cause Ansible's unarchive module don't support *.bz2 format
+    - name: Unpack toolchain sources
+      shell:
+        cmd: "tar -xjf {{ work_dir }}/{{ src_filename }} -C {{ work_dir }}"
+        warn: false
+
+    - name: Patch build-toolchain.sh (x86_64-darwin)
+      replace:
+        path: "{{ work_dir }}/{{ src_dirname }}/build-toolchain.sh"
+        regexp: "--with-python=yes"
+        replace: "--with-python={{ work_dir }}/python/bin/python3"
+
+    # to compile gdb with custom Python, it need to be in PATH for compilation time
+    - name: Build toolchain
+      shell: |
+        export PATH="{{ work_dir }}/python/bin:$PATH"
+        ./install-sources.sh
+        ./build-prerequisites.sh
+        ./build-toolchain.sh --skip_steps=howto,manual
+        #       become: true
+      args:
+        chdir: "{{ work_dir }}/{{ src_dirname }}"
+
+    - name: Find builded toolchain to patch (x86_64-darwin)
+      find:
+        paths: "{{ work_dir }}/{{ src_dirname }}/pkg"
+        use_regex: true
+        patterns: '.+-mac-.+\.tar\.bz2$'
+        file_type: "file"
+      register: x86_64_darwin_toolchain_tar
+
+    - set_fact:
+        x86_64_darwin_toolchain_tar: "{{ x86_64_darwin_toolchain_tar.files[0].path}}"
+
+    - name: Unpack builded toolchain (x86_64-darwin)
+      shell:
+        cmd: "tar -xjf {{ x86_64_darwin_toolchain_tar }} -C {{ unpack_dir }}"
+        warn: false
+
+    # we can use variable output only on next task..
+    - set_fact:
+        x86_64_darwin_toolchain_dir: "{{ x86_64_darwin_toolchain_tar | basename }}"
+
+    - set_fact:
+        x86_64_darwin_toolchain_dir: "{{ unpack_dir }}/{{ x86_64_darwin_toolchain_dir.split('-mac-') | first }}"
+
+    # cmd is more faster than Ansible copy module
+    - name: Add our packages and libs to toolchain (x86_64-darwin)
+      shell:
+        cmd: "mv {{ work_dir }}/{{ item }} {{ x86_64_darwin_toolchain_dir }}/"
+      with_items: "{{ tools_to_add }}"
+
+    - name: Add openocd to toolchain (x86_64-darwin)
+      shell:
+        cmd: "mv {{ work_dir }}/{{ openocd_darwin_dirname }} {{ x86_64_darwin_toolchain_dir }}/openocd"
+
+    - name: Backup original binnaries (x86_64-darwin)
+      copy:
+        src: "{{ x86_64_darwin_toolchain_dir }}/{{ item }}"
+        dest: "{{ x86_64_darwin_toolchain_dir }}/{{ item }}-bin"
+        mode: 0755
+      with_items: "{{ wrappers }}"
+
+    - name: Add wrappers (x86_64-darwin)
+      copy:
+        src: "{{ src_dir }}/unix/wrappers/{{ item | basename }}-wrapper"
+        dest: "{{ x86_64_darwin_toolchain_dir }}/{{ item }}"
+        mode: 0755
+      with_items: "{{ wrappers }}"
+
+    - name: Fix interpreter in python/bin scripts (x86_64-darwin)
+      replace:
+        path: "{{ x86_64_darwin_toolchain_dir }}/python/bin/{{ item }}"
+        regexp: "#!{{ work_dir }}/python/bin/python3.9"
+        replace: "#!/usr/bin/env python3"
+      loop:
+        - idle3.9
+        - 2to3-3.9
+        - pip3
+        - pip3.9
+        - pydoc3.9
+
+    - name: Pack patched toolchain (x86_64-darwin)
+      archive:
+        path: "{{ x86_64_darwin_toolchain_dir }}"
+        dest: "{{ out_dir }}/{{ x86_64_darwin_toolchain_tar | basename | regex_replace('x86_64-darwin', 'x86_64-darwin-flipper') | regex_replace('.tar.bz2', '.tar.gz') }}"
+
+    - name: Clean temp files
+      file:
+        path: "{{ work_dir }}"
+        state: absent
