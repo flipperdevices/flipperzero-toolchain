@@ -9,15 +9,23 @@
     unpack_dir: "{{ work_dir }}/unpack"
     out_dir: "{{ playbook_dir }}/build"
     src_link: "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10-src.tar.bz2"
+    readline_link: "ftp://ftp.gnu.org/gnu/readline/readline-8.1.tar.gz"
+    openssl_link: "https://www.openssl.org/source/openssl-3.0.4.tar.gz"
     python_link: "https://www.python.org/ftp/python/3.9.9/Python-3.9.9.tgz"
     ncurses_link: "https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.2.tar.gz"
     protobuf_link: "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.1/protobuf-cpp-3.20.1.tar.gz"
     libtool_link: "https://ftpmirror.gnu.org/libtool/libtool-2.4.6.tar.gz"
     src_filename: "{{ src_link | basename }}"
     src_dirname: "{{ src_filename.split('-src') | first }}"
+    readline_filename: "{{ readline_link | basename }}"
+    readline_dirname: "{{ readline_filename.split('.tar.gz') | first }}"
+    readline_configure_args: ""
+    openssl_filename: "{{ openssl_link | basename }}"
+    openssl_dirname: "{{ openssl_filename.split('.tar.gz') | first }}"
+    openssl_configure_args: ""
     python_filename: "{{ python_link | basename }}"
     python_dirname: "{{ python_filename.split('.tgz') | first }}"
-    python_configure_args: ""
+    python_configure_args: "--enable-shared --with-openssl={{ work_dir }}/openssl"
     ncurses_filename: "{{ ncurses_link | basename }}"
     ncurses_dirname: "{{ ncurses_filename.split('.tar.gz') | first }}"
     ncurses_configure_args: "--with-shared --enable-widec --with-versioned-syms"
@@ -31,6 +39,8 @@
     openocd_darwin_filename: "xpack-openocd-0.11.0-3-darwin-x64.tar.gz"
     openocd_darwin_dirname: "{{ openocd_darwin_filename.split('-darwin-x64.tar.gz') | first }}"
     tools_to_add:
+      - "readline"
+      - "openssl"
       - "python"
       - "ncurses"
       - "protobuf"
@@ -46,8 +56,6 @@
       package:
         name:
           - gnu-tar
-          - openssl
-          - readline
         state: latest
 
     - name: Clean old builds
@@ -82,19 +90,25 @@
     - name: Build tools (x86_64-darwin)
       shell: |
         export SYSTEM_VERSION_COMPAT=1
-        PKG_CONFIG_PATH="$(brew --prefix openssl)/lib/pkgconfig" \
-        CPPFLAGS="-I$(brew --prefix readline)/include" \
-        LDFLAGS="-L$(brew --prefix readline)/lib" \
+        if [ "{{ item }}" = "python" ]; then
+          export PKG_CONFIG_PATH="{{ work_dir }}/openssl/lib/pkgconfig"
+          export CPPFLAGS="-I{{ work_dir }}/readline/include"
+          export LDFLAGS="-L{{ work_dir }}/readline/lib"
+        fi
         ./configure "--prefix={{ work_dir }}/{{ item }}" {{ lookup('vars', item ~ '_configure_args') }}
         make "-j{{ ansible_processor_vcpus }}"
-        make install
+        if [ "{{ item }}" = "openssl" ]; then # exclude openssl man pages
+          make install_sw
+        else
+          make install
+        fi
       args:
         chdir: "{{ unpack_dir }}/{{ lookup('vars', item ~ '_dirname') }}"
       with_items: "{{ tools_to_add }}"
 
     - name: Unpack pre-compiled openocd (x86_64-darwin)
       unarchive:
-        src: "{{ src_dir }}/unix/{{ openocd_linux_filename }}"
+        src: "{{ src_dir }}/unix/{{ openocd_darwin_filename }}"
         dest: "{{ work_dir }}/"
 
     - name: Install python libs (x86_64-darwin)
@@ -191,7 +205,7 @@
     - name: Pack patched toolchain (x86_64-darwin)
       archive:
         path: "{{ x86_64_darwin_toolchain_dir }}"
-        dest: "{{ out_dir }}/{{ x86_64_darwin_toolchain_tar | basename | regex_replace('x86_64-darwin', 'x86_64-darwin-flipper') | regex_replace('.tar.bz2', '.tar.gz') }}"
+        dest: "{{ out_dir }}/{{ x86_64_darwin_toolchain_tar | basename | regex_replace('-mac-.+\.tar\.bz2', '-x86_64-darwin-flipper.tar.gz') }}"
 
     - name: Clean temp files
       file:
