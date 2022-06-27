@@ -124,7 +124,7 @@
 
     - name: Unpack pre-compiled openocd (x86_64-linux)
       unarchive:
-        src: "{{ src_dir }}/unix/{{ openocd_linux_filename }}"
+        src: "{{ src_dir }}/linux/{{ openocd_linux_filename }}"
         dest: "{{ work_dir }}/"
 
     - name: Unpack pre-compiled python (i686-windows)
@@ -167,16 +167,21 @@
         cmd: "tar -xjf {{ work_dir }}/{{ src_filename }} -C {{ work_dir }}"
         warn: false
 
-    - name: Patch build-toolchain.sh (x86_64-linux)
-      replace:
-        path: "{{ work_dir }}/{{ src_dirname }}/build-toolchain.sh"
-        regexp: "--with-python=yes"
-        replace: "--with-python={{ work_dir }}/python/bin/python3"
+    - name: Patch python-config.sh (x86_64-linux)
+      copy:
+        src: "{{ src_dir }}/linux/python-config.sh"
+        dest: "{{ work_dir }}/{{ src_dirname }}/python-config-linux.sh"
 
     - name: Patch python-config.sh (i686-windows)
       copy:
         src: "{{ src_dir }}/win32/python-config.sh"
         dest: "{{ work_dir }}/{{ src_dirname }}/python-config.sh"
+
+    - name: Patch build-toolchain.sh (x86_64-linux)
+      replace:
+        path: "{{ work_dir }}/{{ src_dirname }}/build-toolchain.sh"
+        regexp: "--with-python=yes"
+        replace: "--with-python={{ work_dir }}/{{ src_dirname }}/python-config.sh"
 
     # to compile gdb with custom Python, it need to be in PATH for compilation time
     - name: Build toolchain
@@ -185,7 +190,6 @@
         ./install-sources.sh
         ./build-prerequisites.sh
         ./build-toolchain.sh
-        #       become: true
       args:
         chdir: "{{ work_dir }}/{{ src_dirname }}"
 
@@ -266,7 +270,7 @@
 
     - name: Add wrappers (x86_64-linux)
       copy:
-        src: "{{ src_dir }}/unix/wrappers/{{ item | basename }}-wrapper"
+        src: "{{ src_dir }}/linux/wrappers/{{ item | basename }}-wrapper"
         dest: "{{ x86_64_linux_toolchain_dir }}/{{ item }}"
         mode: 0755
       with_items: "{{ wrappers }}"
