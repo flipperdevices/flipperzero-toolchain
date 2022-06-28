@@ -12,9 +12,7 @@
     readline_link: "ftp://ftp.gnu.org/gnu/readline/readline-8.1.tar.gz"
     openssl_link: "https://www.openssl.org/source/openssl-3.0.4.tar.gz"
     python_link: "https://www.python.org/ftp/python/3.9.9/Python-3.9.9.tgz"
-    ncurses_link: "https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.2.tar.gz"
     protobuf_link: "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.1/protobuf-cpp-3.20.1.tar.gz"
-    libtool_link: "https://ftpmirror.gnu.org/libtool/libtool-2.4.6.tar.gz"
     src_filename: "{{ src_link | basename }}"
     src_dirname: "{{ src_filename.split('-src') | first }}"
     readline_filename: "{{ readline_link | basename }}"
@@ -26,28 +24,20 @@
     python_filename: "{{ python_link | basename }}"
     python_dirname: "{{ python_filename.split('.tgz') | first }}"
     python_configure_args: "--enable-shared --with-openssl={{ work_dir }}/openssl"
-    ncurses_filename: "{{ ncurses_link | basename }}"
-    ncurses_dirname: "{{ ncurses_filename.split('.tar.gz') | first }}"
-    ncurses_configure_args: "--with-shared --enable-widec --with-versioned-syms"
+    curses_configure_args: "--with-shared --enable-widec --with-versioned-syms"
     protobuf_filename: "{{ protobuf_link | basename }}"
     protobuf_version: "{{ protobuf_filename.split('-cpp-')[1].split('.tar.gz') | first }}"
     protobuf_dirname: "protobuf-{{ protobuf_version }}"
     protobuf_configure_args: ""
-    libtool_filename: "{{ libtool_link | basename }}"
-    libtool_dirname: "{{ libtool_filename.split('.tar.gz') | first }}"
-    libtool_configure_args: ""
     openocd_darwin_filename: "xpack-openocd-0.11.0-3-darwin-x64.tar.gz"
     openocd_darwin_dirname: "{{ openocd_darwin_filename.split('-darwin-x64.tar.gz') | first }}"
     tools_to_add:
       - "readline"
       - "openssl"
       - "python"
-      - "ncurses"
       - "protobuf"
-      - "libtool"
     wrappers:
       - "bin/arm-none-eabi-gdb-py"
-      - "bin/arm-none-eabi-gdb"
       - "protobuf/bin/protoc"
       - "python/bin/python3.9"
 
@@ -182,6 +172,7 @@
       shell:
         cmd: "mv {{ work_dir }}/{{ item }} {{ x86_64_darwin_toolchain_dir }}/"
       with_items: "{{ tools_to_add }}"
+      when: item != "readline"
 
     - name: Add openocd to toolchain (x86_64-darwin)
       shell:

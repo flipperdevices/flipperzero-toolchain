@@ -1,0 +1,12 @@
+#!/bin/sh
+# shellcheck disable=SC2048,SC2086
+
+# unofficial strict mode
+set -eu;
+
+# vars
+SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd -P)"
+LIB_PROTOC_PATH="$(cd "$SCRIPT_PATH/../lib" && pwd)"
+
+# run
+DYLD_LIBRARY_PATH="$LIB_PROTOC_PATH" "$SCRIPT_PATH/protoc-bin" $*;
