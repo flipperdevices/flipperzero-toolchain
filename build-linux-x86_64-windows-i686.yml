@@ -4,6 +4,7 @@
 - hosts: 127.0.0.1
   connection: local
   vars:
+    toolchain_version: "1"
     src_dir: "{{ playbook_dir }}/src"
     work_dir: "{{ playbook_dir }}/temp"
     unpack_dir: "{{ work_dir }}/unpack"
@@ -38,10 +39,10 @@
     openocd_win32_dirname: "{{ openocd_win32_filename.split('-win32-ia32.zip') | first }}"
     tools_to_add:
       - "libffi"
-      - "python"
       - "ncurses"
-      - "protobuf"
       - "libtool"
+      - "python"
+      - "protobuf"
     wrappers:
       - "bin/arm-none-eabi-gdb-py"
       - "bin/arm-none-eabi-gdb"
@@ -120,6 +121,15 @@
 
     - name: Build tools (x86_64-linux)
       shell: |
+        if [ "{{ item }}" != "libffi" ]; then
+          export LD_LIBRARY_PATH="{{ work_dir }}/libffi/lib:$LD_LIBRARY_PATH"
+        fi
+        if [ "{{ item }}" != "ncurses" ]; then
+          export LD_LIBRARY_PATH="{{ work_dir }}/ncurses/lib:$LD_LIBRARY_PATH"
+        fi
+        if [ "{{ item }}" != "libtool" ]; then
+          export LD_LIBRARY_PATH="{{ work_dir }}/libtool/lib:$LD_LIBRARY_PATH"
+        fi
         if [ "{{ item }}" = "libffi" ]; then
           ./autogen.sh
         fi
@@ -304,17 +314,27 @@
         src: "{{ src_dir }}/win32/wrappers/arm-none-eabi-gdb-py-wrapper.bat"
         dest: "{{ i686_windows_toolchain_dir }}/bin/arm-none-eabi-gdb-py.bat"
 
+    - name: Add toolchain version (x86_64-linux)
+      copy:
+        content: "{{ toolchain_version }}"
+        dest: "{{ x86_64_linux_toolchain_dir }}/VERSION"
+
+    - name: Add toolchain version (i686-windows)
+      copy:
+        content: "{{ toolchain_version }}"
+        dest: "{{ x86_64_linux_toolchain_dir }}/VERSION"
+
     - name: Pack patched toolchain (x86_64-linux)
       archive:
         path: "{{ x86_64_linux_toolchain_dir }}"
-        dest: "{{ out_dir }}/{{ x86_64_linux_toolchain_tar | basename | regex_replace('x86_64-linux', 'x86_64-linux-flipper') | regex_replace('.tar.bz2', '.tar.gz') }}"
+        dest: "{{ out_dir }}/{{ x86_64_linux_toolchain_tar | basename | regex_replace('x86_64-linux', 'x86_64-linux-flipper-' + toolchain_version) | regex_replace('.tar.bz2', '.tar.gz') }}"
 
     - name: Pack patched toolchain (i686-windows)
       archive:
         path: "{{ i686_windows_toolchain_dir }}"
-        dest: "{{ out_dir }}/{{ i686_windows_toolchain_zip | basename | regex_replace('win32', 'i686-windows-flipper') }}"
+        dest: "{{ out_dir }}/{{ i686_windows_toolchain_zip | basename | regex_replace('win32', 'i686-windows-flipper-' + toolchain_version) }}"
         format: zip
 
-    - name: Upload toolchain to server
-      shell:
-        cmd: "rsync -Pav -e \"ssh -p 41337 -i {{ ansible_env.HOME }}/.ssh/server.flipperdevices.com.sec\" {{ out_dir }}/ data@server.flipperdevices.com:/home/data/toolchain/"
+          #    - name: Upload toolchain to server
+          #shell:
+          #cmd: "rsync -Pav -e \"ssh -p 41337 -i {{ ansible_env.HOME }}/.ssh/server.flipperdevices.com.sec\" {{ out_dir }}/ data@server.flipperdevices.com:/home/data/toolchain/"
