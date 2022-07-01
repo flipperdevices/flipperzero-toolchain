@@ -4,17 +4,21 @@
 - hosts: 127.0.0.1
   connection: local
   vars:
+    toolchain_version: "1"
     src_dir: "{{ playbook_dir }}/src"
     work_dir: "{{ playbook_dir }}/temp"
     unpack_dir: "{{ work_dir }}/unpack"
     out_dir: "{{ playbook_dir }}/build"
     src_link: "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10-src.tar.bz2"
+    gettext_link: "https://ftp.gnu.org/pub/gnu/gettext/gettext-0.21.tar.gz"
     readline_link: "ftp://ftp.gnu.org/gnu/readline/readline-8.1.tar.gz"
     openssl_link: "https://www.openssl.org/source/openssl-3.0.4.tar.gz"
     python_link: "https://www.python.org/ftp/python/3.9.9/Python-3.9.9.tgz"
     protobuf_link: "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.1/protobuf-cpp-3.20.1.tar.gz"
     src_filename: "{{ src_link | basename }}"
     src_dirname: "{{ src_filename.split('-src') | first }}"
+    gettext_filename: "{{ gettext_link | basename }}"
+    gettext_dirname: "{{ gettext_filename.split('.tar.gz') | first }}"
     readline_filename: "{{ readline_link | basename }}"
     readline_dirname: "{{ readline_filename.split('.tar.gz') | first }}"
     readline_configure_args: ""
@@ -32,6 +36,7 @@
     openocd_darwin_filename: "xpack-openocd-0.11.0-3-darwin-x64.tar.gz"
     openocd_darwin_dirname: "{{ openocd_darwin_filename.split('-darwin-x64.tar.gz') | first }}"
     tools_to_add:
+      - "gettext"
       - "readline"
       - "openssl"
       - "python"
@@ -86,6 +91,15 @@
     - name: Build tools (x86_64-darwin)
       shell: |
         export SYSTEM_VERSION_COMPAT=1
+        if [ "{{ item }}" != "gettext" ]; then
+          export DYLD_LIBRARY_PATH="{{ work_dir }}/gettext/lib:$DYLD_LIBRARY_PATH"
+        fi
+        if [ "{{ item }}" != "readline" ]; then
+          export DYLD_LIBRARY_PATH="{{ work_dir }}/readline/lib:$DYLD_LIBRARY_PATH"
+        fi
+        if [ "{{ item }}" != "openssl" ]; then
+          export DYLD_LIBRARY_PATH="{{ work_dir }}/openssl/lib:$DYLD_LIBRARY_PATH"
+        fi
         if [ "{{ item }}" = "python" ]; then
           export PKG_CONFIG_PATH="{{ work_dir }}/openssl/lib/pkgconfig"
           export CPPFLAGS="-I{{ work_dir }}/readline/include"
@@ -204,12 +218,12 @@
         - pip3.9
         - pydoc3.9
 
+    - name: Add toolchain version (x86_64-darwin)
+      copy:
+        content: "{{ toolchain_version }}"
+        dest: "{{ x86_64_darwin_toolchain_dir }}/VERSION"
+
     - name: Pack patched toolchain (x86_64-darwin)
       archive:
         path: "{{ x86_64_darwin_toolchain_dir }}"
-        dest: "{{ out_dir }}/{{ x86_64_darwin_toolchain_dir | basename }}-x86_64-darwin-flipper.tar.gz"
-
-    - name: Clean temp files
-      file:
-        path: "{{ work_dir }}"
-        state: absent
+        dest: "{{ out_dir }}/{{ x86_64_darwin_toolchain_dir | basename }}-x86_64-darwin-flipper-{{ toolchain_version }}.tar.gz"
