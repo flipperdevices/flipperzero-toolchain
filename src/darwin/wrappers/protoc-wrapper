@@ -9,4 +9,4 @@ SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd -P)"
 LIB_PROTOC_PATH="$(cd "$SCRIPT_PATH/../lib" && pwd)"
 
 # run
-DYLD_LIBRARY_PATH="$LIB_PROTOC_PATH" "$SCRIPT_PATH/protoc-bin" $*;
+DYLD_LIBRARY_PATH="$LIB_PROTOC_PATH" "$SCRIPT_PATH/protoc-bin" "$@";

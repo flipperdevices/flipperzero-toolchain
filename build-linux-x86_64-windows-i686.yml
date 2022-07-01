@@ -4,17 +4,22 @@
 - hosts: 127.0.0.1
   connection: local
   vars:
+    toolchain_version: "1"
     src_dir: "{{ playbook_dir }}/src"
     work_dir: "{{ playbook_dir }}/temp"
     unpack_dir: "{{ work_dir }}/unpack"
     out_dir: "{{ playbook_dir }}/build"
     src_link: "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10-src.tar.bz2"
+    libffi_link: "https://github.com/libffi/libffi/archive/refs/tags/v3.3.tar.gz"
     python_link: "https://www.python.org/ftp/python/3.9.9/Python-3.9.9.tgz"
     ncurses_link: "https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.2.tar.gz"
     protobuf_link: "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.1/protobuf-cpp-3.20.1.tar.gz"
     libtool_link: "https://ftpmirror.gnu.org/libtool/libtool-2.4.6.tar.gz"
     src_filename: "{{ src_link | basename }}"
     src_dirname: "{{ src_filename.split('-src') | first }}"
+    libffi_filename: "libffi-3.3.tar.gz"
+    libffi_dirname: "{{ libffi_filename.split('.tar.gz') | first }}"
+    libffi_configure_args: "--disable-docs"
     python_filename: "{{ python_link | basename }}"
     python_dirname: "{{ python_filename.split('.tgz') | first }}"
     python_configure_args: "--enable-shared"
@@ -33,10 +38,11 @@
     openocd_win32_filename: "xpack-openocd-0.11.0-3-win32-ia32.zip"
     openocd_win32_dirname: "{{ openocd_win32_filename.split('-win32-ia32.zip') | first }}"
     tools_to_add:
-      - "python"
+      - "libffi"
       - "ncurses"
-      - "protobuf"
       - "libtool"
+      - "python"
+      - "protobuf"
     wrappers:
       - "bin/arm-none-eabi-gdb-py"
       - "bin/arm-none-eabi-gdb"
@@ -115,6 +121,18 @@
 
     - name: Build tools (x86_64-linux)
       shell: |
+        if [ "{{ item }}" != "libffi" ]; then
+          export LD_LIBRARY_PATH="{{ work_dir }}/libffi/lib:$LD_LIBRARY_PATH"
+        fi
+        if [ "{{ item }}" != "ncurses" ]; then
+          export LD_LIBRARY_PATH="{{ work_dir }}/ncurses/lib:$LD_LIBRARY_PATH"
+        fi
+        if [ "{{ item }}" != "libtool" ]; then
+          export LD_LIBRARY_PATH="{{ work_dir }}/libtool/lib:$LD_LIBRARY_PATH"
+        fi
+        if [ "{{ item }}" = "libffi" ]; then
+          ./autogen.sh
+        fi
         ./configure "--prefix={{ work_dir }}/{{ item }}" {{ lookup('vars', item ~ '_configure_args') }}
         make "-j{{ ansible_processor_vcpus }}"
         make install
@@ -171,17 +189,21 @@
       copy:
         src: "{{ src_dir }}/linux/python-config.sh"
         dest: "{{ work_dir }}/{{ src_dirname }}/python-config-linux.sh"
+        mode: 0755
 
     - name: Patch python-config.sh (i686-windows)
       copy:
         src: "{{ src_dir }}/win32/python-config.sh"
         dest: "{{ work_dir }}/{{ src_dirname }}/python-config.sh"
+        mode: 0755
+
+    # We don't need to patch build-toolchain.sh for windows, cause it patched by default
 
     - name: Patch build-toolchain.sh (x86_64-linux)
       replace:
         path: "{{ work_dir }}/{{ src_dirname }}/build-toolchain.sh"
         regexp: "--with-python=yes"
-        replace: "--with-python={{ work_dir }}/{{ src_dirname }}/python-config.sh"
+        replace: "--with-python={{ work_dir }}/{{ src_dirname }}/python-config-linux.sh"
 
     # to compile gdb with custom Python, it need to be in PATH for compilation time
     - name: Build toolchain
@@ -292,22 +314,27 @@
         src: "{{ src_dir }}/win32/wrappers/arm-none-eabi-gdb-py-wrapper.bat"
         dest: "{{ i686_windows_toolchain_dir }}/bin/arm-none-eabi-gdb-py.bat"
 
+    - name: Add toolchain version (x86_64-linux)
+      copy:
+        content: "{{ toolchain_version }}"
+        dest: "{{ x86_64_linux_toolchain_dir }}/VERSION"
+
+    - name: Add toolchain version (i686-windows)
+      copy:
+        content: "{{ toolchain_version }}"
+        dest: "{{ x86_64_linux_toolchain_dir }}/VERSION"
+
     - name: Pack patched toolchain (x86_64-linux)
       archive:
         path: "{{ x86_64_linux_toolchain_dir }}"
-        dest: "{{ out_dir }}/{{ x86_64_linux_toolchain_tar | basename | regex_replace('x86_64-linux', 'x86_64-linux-flipper') | regex_replace('.tar.bz2', '.tar.gz') }}"
+        dest: "{{ out_dir }}/{{ x86_64_linux_toolchain_tar | basename | regex_replace('x86_64-linux', 'x86_64-linux-flipper-' + toolchain_version) | regex_replace('.tar.bz2', '.tar.gz') }}"
 
     - name: Pack patched toolchain (i686-windows)
       archive:
         path: "{{ i686_windows_toolchain_dir }}"
-        dest: "{{ out_dir }}/{{ i686_windows_toolchain_zip | basename | regex_replace('win32', 'i686-windows-flipper') }}"
+        dest: "{{ out_dir }}/{{ i686_windows_toolchain_zip | basename | regex_replace('win32', 'i686-windows-flipper-' + toolchain_version) }}"
         format: zip
 
-    - name: Clean temp files
-      file:
-        path: "{{ work_dir }}"
-        state: absent
-
-    - name: Upload toolchain to server
-      shell:
-        cmd: "rsync -Pav -e \"ssh -p 41337 -i {{ ansible_env.HOME }}/.ssh/server.flipperdevices.com.sec\" {{ out_dir }}/ data@server.flipperdevices.com:/home/data/toolchain/"
+          #    - name: Upload toolchain to server
+          #shell:
+          #cmd: "rsync -Pav -e \"ssh -p 41337 -i {{ ansible_env.HOME }}/.ssh/server.flipperdevices.com.sec\" {{ out_dir }}/ data@server.flipperdevices.com:/home/data/toolchain/"
