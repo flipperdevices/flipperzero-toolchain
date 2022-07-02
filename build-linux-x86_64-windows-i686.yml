@@ -4,7 +4,7 @@
 - hosts: 127.0.0.1
   connection: local
   vars:
-    toolchain_version: "1"
+    toolchain_version: "2"
     src_dir: "{{ playbook_dir }}/src"
     work_dir: "{{ playbook_dir }}/temp"
     unpack_dir: "{{ work_dir }}/unpack"
@@ -322,7 +322,7 @@
     - name: Add toolchain version (i686-windows)
       copy:
         content: "{{ toolchain_version }}"
-        dest: "{{ x86_64_linux_toolchain_dir }}/VERSION"
+        dest: "{{ i686_windows_toolchain_dir }}/VERSION"
 
     - name: Rename toolchain directory (x86_64-linux)
       shell:
