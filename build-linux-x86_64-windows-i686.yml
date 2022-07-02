@@ -4,7 +4,7 @@
 - hosts: 127.0.0.1
   connection: local
   vars:
-    toolchain_version: "1"
+    toolchain_version: "2"
     src_dir: "{{ playbook_dir }}/src"
     work_dir: "{{ playbook_dir }}/temp"
     unpack_dir: "{{ work_dir }}/unpack"
@@ -322,19 +322,27 @@
     - name: Add toolchain version (i686-windows)
       copy:
         content: "{{ toolchain_version }}"
-        dest: "{{ x86_64_linux_toolchain_dir }}/VERSION"
+        dest: "{{ i686_windows_toolchain_dir }}/VERSION"
+
+    - name: Rename toolchain directory (x86_64-linux)
+      shell:
+        cmd: "mv {{ x86_64_linux_toolchain_dir }} {{ unpack_dir }}/gcc-arm-none-eabi-10.3-x86_64-linux-flipper"
+
+    - name: Rename toolchain directory (i686-windows)
+      shell:
+        cmd: "mv {{ i686_windows_toolchain_dir }} {{ unpack_dir }}/win32/gcc-arm-none-eabi-10.3-i686-windows-flipper"
 
     - name: Pack patched toolchain (x86_64-linux)
       archive:
-        path: "{{ x86_64_linux_toolchain_dir }}"
-        dest: "{{ out_dir }}/{{ x86_64_linux_toolchain_tar | basename | regex_replace('x86_64-linux', 'x86_64-linux-flipper-' + toolchain_version) | regex_replace('.tar.bz2', '.tar.gz') }}"
+        path: "{{ unpack_dir }}/gcc-arm-none-eabi-10.3-x86_64-linux-flipper"
+        dest: "{{ out_dir }}/gcc-arm-none-eabi-10.3-x86_64-linux-flipper-{{ toolchain_version }}.tar.gz"
 
     - name: Pack patched toolchain (i686-windows)
       archive:
-        path: "{{ i686_windows_toolchain_dir }}"
-        dest: "{{ out_dir }}/{{ i686_windows_toolchain_zip | basename | regex_replace('win32', 'i686-windows-flipper-' + toolchain_version) }}"
+        path: "{{ unpack_dir }}/win32/gcc-arm-none-eabi-10.3-i686-windows-flipper"
+        dest: "{{ out_dir }}/gcc-arm-none-eabi-10.3-i686-windows-flipper-{{ toolchain_version }}.zip"
         format: zip
 
-          #    - name: Upload toolchain to server
-          #shell:
-          #cmd: "rsync -Pav -e \"ssh -p 41337 -i {{ ansible_env.HOME }}/.ssh/server.flipperdevices.com.sec\" {{ out_dir }}/ data@server.flipperdevices.com:/home/data/toolchain/"
+    - name: Upload toolchain to server
+      shell:
+        cmd: "rsync -Pav -e \"ssh -p 41337 -i {{ ansible_env.HOME }}/.ssh/server.flipperdevices.com.sec\" {{ out_dir }}/ data@server.flipperdevices.com:/home/data/toolchain/"
