@@ -19,6 +19,7 @@
     src_dirname: "{{ src_filename.split('-src') | first }}"
     gettext_filename: "{{ gettext_link | basename }}"
     gettext_dirname: "{{ gettext_filename.split('.tar.gz') | first }}"
+    gettext_configure_args: ""
     readline_filename: "{{ readline_link | basename }}"
     readline_dirname: "{{ readline_filename.split('.tar.gz') | first }}"
     readline_configure_args: ""
@@ -223,7 +224,11 @@
         content: "{{ toolchain_version }}"
         dest: "{{ x86_64_darwin_toolchain_dir }}/VERSION"
 
+    - name: Rename toolchain directory (x86_64-darwin)
+      shell:
+        cmd: "mv {{ x86_64_darwin_toolchain_dir }} {{ unpack_dir }}/gcc-arm-none-eabi-10.3-x86_64-darwin-flipper"
+
     - name: Pack patched toolchain (x86_64-darwin)
       archive:
-        path: "{{ x86_64_darwin_toolchain_dir }}"
-        dest: "{{ out_dir }}/{{ x86_64_darwin_toolchain_dir | basename }}-x86_64-darwin-flipper-{{ toolchain_version }}.tar.gz"
+        path: "{{ unpack_dir }}/gcc-arm-none-eabi-10.3-x86_64-darwin-flipper"
+        dest: "{{ out_dir }}/gcc-arm-none-eabi-10.3-x86_64-darwin-flipper-{{ toolchain_version }}.tar.gz"
