@@ -92,15 +92,9 @@
     - name: Build tools (x86_64-darwin)
       shell: |
         export SYSTEM_VERSION_COMPAT=1
-        if [ "{{ item }}" != "gettext" ]; then
-          export DYLD_LIBRARY_PATH="{{ work_dir }}/gettext/lib:$DYLD_LIBRARY_PATH"
-        fi
-        if [ "{{ item }}" != "readline" ]; then
-          export DYLD_LIBRARY_PATH="{{ work_dir }}/readline/lib:$DYLD_LIBRARY_PATH"
-        fi
-        if [ "{{ item }}" != "openssl" ]; then
-          export DYLD_LIBRARY_PATH="{{ work_dir }}/openssl/lib:$DYLD_LIBRARY_PATH"
-        fi
+        export DYLD_LIBRARY_PATH="{{ work_dir }}/gettext/lib:$DYLD_LIBRARY_PATH"
+        export DYLD_LIBRARY_PATH="{{ work_dir }}/readline/lib:$DYLD_LIBRARY_PATH"
+        export DYLD_LIBRARY_PATH="{{ work_dir }}/openssl/lib:$DYLD_LIBRARY_PATH"
         if [ "{{ item }}" = "python" ]; then
           export PKG_CONFIG_PATH="{{ work_dir }}/openssl/lib/pkgconfig"
           export CPPFLAGS="-I{{ work_dir }}/readline/include"

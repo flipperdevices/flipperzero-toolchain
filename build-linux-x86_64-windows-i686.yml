@@ -288,12 +288,12 @@
         mode: 0755
       with_items: "{{ wrappers }}"
 
-        #- name: Backup original binnaries (i686-windows)
-        #shell:
-        #cmd: "mv arm-none-eabi-gdb-py.exe arm-none-eabi-gdb-py-bin.exe"
-        #creates: "{{ i686_windows_toolchain_dir }}/bin/arm-none-eabi-gdb-py-bin.exe"
-        #args:
-        #chdir: "{{ i686_windows_toolchain_dir }}/bin"
+    - name: Backup original binnaries (i686-windows)
+      shell:
+        cmd: "mv arm-none-eabi-gdb-py.exe arm-none-eabi-gdb-py-bin.exe"
+        creates: "{{ i686_windows_toolchain_dir }}/bin/arm-none-eabi-gdb-py-bin.exe"
+        args:
+        chdir: "{{ i686_windows_toolchain_dir }}/bin"
 
     - name: Add wrappers (x86_64-linux)
       copy:
@@ -314,10 +314,10 @@
         - pip3.9
         - pydoc3.9
 
-          #- name: Add wrappers (i686-windows)
-          #copy:
-          #src: "{{ src_dir }}/win32/wrappers/arm-none-eabi-gdb-py-wrapper.bat"
-          #dest: "{{ i686_windows_toolchain_dir }}/bin/arm-none-eabi-gdb-py.bat"
+    - name: Add wrappers (i686-windows)
+      copy:
+        src: "{{ src_dir }}/win32/wrappers/arm-none-eabi-gdb-py-wrapper.bat"
+        dest: "{{ i686_windows_toolchain_dir }}/bin/arm-none-eabi-gdb-py.bat"
 
     - name: Add toolchain version (x86_64-linux)
       copy:
