@@ -16,6 +16,7 @@ List of tools:
 - Python 3.9
 - XPack OpenOCD 0.11.0-3
 - Protobuf 3.20.1
+- clang-format TODO
 
 List of Python libraries:
 - Pillow 9.1.1

@@ -4,7 +4,7 @@
 - hosts: 127.0.0.1
   connection: local
   vars:
-    toolchain_version: "3"
+    toolchain_version: "4"
     src_dir: "{{ playbook_dir }}/src"
     work_dir: "{{ playbook_dir }}/temp"
     unpack_dir: "{{ work_dir }}/unpack"
@@ -118,7 +118,7 @@
 
     - name: Install python libs (x86_64-darwin)
       shell:
-        cmd: "{{ work_dir }}/python/bin/python3 -m pip install protobuf=={{ protobuf_version }} pyserial==3.5 heatshrink2==0.11.0 Pillow==9.1.1 python3-protobuf==2.5.0"
+        cmd: "{{ work_dir }}/python/bin/python3 -m pip install protobuf=={{ protobuf_version }} pyserial==3.5 heatshrink2==0.11.0 Pillow==9.1.1 python3-protobuf==2.5.0 click==8.1.3 platformdirs==2.5.2 tomli==2.0.1 pathspec==0.9.0 typing-extensions==4.3.0 mypy_extensions==0.4.3"
 
     - name: Download toolchain sources
       get_url:
@@ -226,3 +226,7 @@
       archive:
         path: "{{ unpack_dir }}/gcc-arm-none-eabi-10.3-x86_64-darwin-flipper"
         dest: "{{ out_dir }}/gcc-arm-none-eabi-10.3-x86_64-darwin-flipper-{{ toolchain_version }}.tar.gz"
+
+    - name: Upload toolchain to server
+      shell:
+        cmd: "rsync -Pav -e \"ssh -p 41337 -i {{ ansible_env.HOME }}/.ssh/server.flipperdevices.com.sec\" {{ out_dir }}/ data@server.flipperdevices.com:/home/data/toolchain/"
