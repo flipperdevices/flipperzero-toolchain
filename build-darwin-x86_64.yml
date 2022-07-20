@@ -226,7 +226,7 @@
     - name: Add toolchain version (x86_64-darwin)
       copy:
         content: "{{ toolchain_version }}"
-        dest: "{{ x86_64_darwin_toolchain_dir }}/VERSION"
+        dest: "{{ unpack_dir }}/gcc-arm-none-eabi-10.3-x86_64-darwin-flipper/VERSION"
 
     - name: Pack patched toolchain (x86_64-darwin)
       archive:
