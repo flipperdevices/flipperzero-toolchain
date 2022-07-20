@@ -4,7 +4,7 @@
 - hosts: 127.0.0.1
   connection: local
   vars:
-    toolchain_version: "4"
+    toolchain_version: "6"
     src_dir: "{{ playbook_dir }}/src"
     work_dir: "{{ playbook_dir }}/temp"
     unpack_dir: "{{ work_dir }}/unpack"
@@ -15,8 +15,12 @@
     ncurses_link: "https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.2.tar.gz"
     protobuf_link: "https://github.com/protocolbuffers/protobuf/releases/download/v3.20.1/protobuf-cpp-3.20.1.tar.gz"
     libtool_link: "https://ftpmirror.gnu.org/libtool/libtool-2.4.6.tar.gz"
+    libedit_link: "https://www.thrysoee.dk/editline/libedit-20210910-3.1.tar.gz"
     src_filename: "{{ src_link | basename }}"
     src_dirname: "{{ src_filename.split('-src') | first }}"
+    libedit_filename: "{{ libedit_link | basename }}"
+    libedit_dirname: "{{ edit_filename.split('.tar.gz') | first }}"
+    lidedit_configure_args: ""
     libffi_filename: "libffi-3.3.tar.gz"
     libffi_dirname: "{{ libffi_filename.split('.tar.gz') | first }}"
     libffi_configure_args: "--disable-docs"
@@ -289,7 +293,7 @@
       shell:
         cmd: "mv arm-none-eabi-gdb-py.exe arm-none-eabi-gdb-py-bin.exe"
         creates: "{{ i686_windows_toolchain_dir }}/bin/arm-none-eabi-gdb-py-bin.exe"
-        args:
+      args:
         chdir: "{{ i686_windows_toolchain_dir }}/bin"
 
     - name: Add wrappers (x86_64-linux)
@@ -316,16 +320,6 @@
         src: "{{ src_dir }}/win32/wrappers/arm-none-eabi-gdb-py-wrapper.bat"
         dest: "{{ i686_windows_toolchain_dir }}/bin/arm-none-eabi-gdb-py.bat"
 
-    - name: Add toolchain version (x86_64-linux)
-      copy:
-        content: "{{ toolchain_version }}"
-        dest: "{{ x86_64_linux_toolchain_dir }}/VERSION"
-
-    - name: Add toolchain version (i686-windows)
-      copy:
-        content: "{{ toolchain_version }}"
-        dest: "{{ i686_windows_toolchain_dir }}/VERSION"
-
     - name: Rename toolchain directory (x86_64-linux)
       shell:
         cmd: "mv {{ x86_64_linux_toolchain_dir }} {{ unpack_dir }}/gcc-arm-none-eabi-10.3-x86_64-linux-flipper"
@@ -333,6 +327,28 @@
     - name: Rename toolchain directory (i686-windows)
       shell:
         cmd: "mv {{ i686_windows_toolchain_dir }} {{ unpack_dir }}/win32/gcc-arm-none-eabi-10.3-i686-windows-flipper"
+
+    - name: Add clang-format to toolchain (x86_64-linux)
+      copy:
+        src: "{{ src_dir }}/linux/bin/clang-format"
+        dest: "{{ unpack_dir }}/gcc-arm-none-eabi-10.3-x86_64-linux-flipper/bin/clang-format"
+        mode: 0755
+
+    - name: Add clang-format to toolchain (i686-windows)
+      copy:
+        src: "{{ src_dir }}/win32/bin/clang-format.exe"
+        dest: "{{ unpack_dir }}/win32/gcc-arm-none-eabi-10.3-i686-windows-flipper/bin/clang-format.exe"
+        mode: 0755
+
+    - name: Add toolchain version (x86_64-linux)
+      copy:
+        content: "{{ toolchain_version }}"
+        dest: "{{ unpack_dir }}/gcc-arm-none-eabi-10.3-x86_64-linux-flipper/VERSION"
+
+    - name: Add toolchain version (i686-windows)
+      copy:
+        content: "{{ toolchain_version }}"
+        dest: "{{ unpack_dir }}/win32/gcc-arm-none-eabi-10.3-i686-windows-flipper/VERSION"
 
     - name: Pack patched toolchain (x86_64-linux)
       archive:
