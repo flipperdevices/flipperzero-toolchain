@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2207
 
 set -euo pipefail;
 
@@ -32,6 +33,6 @@ for FILE in "${ALL_FILES[@]}"; do
             continue;
         fi
         REL_LIB_PATH="$(realpath --relative-to="$(dirname "$FILE")" "$LIB_PATH")";
-        install_name_tool -change "$WRONG_LIB_PATH" "@executable_path/$REL_LIB_PATH" "$FILE";
+        install_name_tool -change "$WRONG_LIB_PATH" "@loader_path/$REL_LIB_PATH" "$FILE";
     done
 done
