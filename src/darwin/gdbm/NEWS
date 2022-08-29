@@ -1,0 +1,692 @@
+GNU dbm NEWS -- history of user-visible changes. 2022-02-04
+Copyright (C) 1990-2022 Free Software Foundation, Inc.
+See the end of file for copying conditions.
+
+Please send gdbm bug reports to <bug-gdbm@gnu.org>.
+
+Version 1.23, 2022-02-04
+
+* Bucket cache switched from balanced tree to hash table
+
+Change suggested by Terence Kelly.
+
+* Speed up flushing the changed buckets on disk
+
+* New option codes for gdbm_setopt
+
+** GDBM_GETDBFORMAT
+
+Return the database format.
+
+** GDBM_GETDIRDEPTH
+
+Return the directory depth, i.e. the number of initial (most significant)
+bits in hash value that are interpreted as index to the directory.
+
+** GDBM_GETBUCKETSIZE
+
+Return maximum number of keys per bucket.
+
+** GDBM_GETCACHEAUTO
+
+Return the status of the automatic cache adjustment.
+
+** GDBM_SETCACHEAUTO
+
+Enable or disable automatic cache adjustment.
+
+Version 1.22, 2021-10-19
+
+* Fix file header validation
+
+* Fix key verification in sequential access
+
+* Fix testing with DejaGNU 1.6.3
+
+* Fix stack overflow in print_usage
+
+* Fix a leak of avail entry on pushing a new avail block
+
+The leak would occur if the original avail table had odd number of entries.
+
+* New gdbmtool variables: errorexit, errormask, trace, timing
+
+"Errorexit" and "errormask" control which GDBM errors would cause the
+program termination and emitting a diagnostic message,
+correspondingly.  Both variables are comma-delimited lists of error
+codes.
+
+The "trace" variable enables tracing of the gdbmtool commands.
+
+The "timing" variable, when set, instructs gdbmtool to print time
+spent in each command it runs.
+
+* New gdbmtool options: -t (--trace), and -T (--timing)
+
+
+Version 1.21, 2021-09-02
+
+* Crash tolerance
+
+By default it is possible for an abrupt crash (e.g., power failure,
+OS kernel panic, or application process crash) to corrupt the gdbm
+database file.  A new Linux-only mechanism enables applications to
+recover the database state corresponding to the most recent
+successful gdbm_sync() call before the crash.  See the chapter 17
+"Crash Tolerance" in the GDBM manual.
+
+* New database file format: numsync
+
+The new "numsync" database format is designed to better support
+crash tolerance.  To create a database in numsync format, the gdbm_open 
+(or gdbm_fd_open) function must be given the GDBM_NEWDB|GDBM_NUMSYNC
+flags.  The GDBM_NUMSYNC flag also takes effect when used together
+with GDBM_WRCREAT, provided that the new file is created.
+
+New function gdbm_convert() is provided for converting the databases
+from standard GDBM format to numsync and vice versa.
+
+The gdbmtool tool can also be used for converting databases between
+these two formats.
+
+* Changes in gdbmtool
+
+** Fix string output in non-ASCII encodings
+
+Printable multi-byte sequences are correctly represented on output.
+This also fixes octal representation of unprintable characters.
+
+** The filename variable
+
+This variable supplies the name of database file for use in "open"
+command, if the latter is called without arguments.  If "open" is
+called with the file name argument, the "filename" variable is
+initialized to this value.
+
+** The fd variable
+
+If set, its value must be an open file descriptor referring to a
+GDBM database file.  The "open" command will use gdbm_fd_open
+function to use this file.   Upon closing the database, this
+descriptor will be closed and the variable will be unset.
+
+The file descriptor to use can also be supplied using the
+-d (--db-descriptor) command line option.
+
+** The format variable
+
+Defines the format in which new databases will be created.  Allowed
+values are: "standard" (default) and "numsync".
+
+** New commands: upgrade and downgrade
+
+The "upgrade" command converts current database to the numsync
+(extended) format.  The "downgrade" command converts current database
+to the standard format.
+
+** New command: snapshot
+
+The "snapshot" command is part of the new crash tolerance support.
+Given the names of two snapshot files, it analyzes them and selects
+the one to be used for database recovery.  See the GDBM manual,
+section 17.5 "Manual crash recovery" for a detailed discussion of its
+use.
+
+Version 1.20, 2021-06-17
+
+* New bucket cache
+
+The bucket cache support has been rewritten from scratch.  The new
+bucket cache code provides for significant speed up of search
+operations.
+
+* Change mmap prereading strategy 
+
+Pre-reading of the memory mapper regions, introduced in version 1.19
+can be advantageous only when doing intensive look-ups on a read-only
+database.  It degrades performance otherwise, especially if doing
+multiple inserts.  Therefore, this version introduces a new flag
+to gdbm_open: GDBM_PREREAD.  When given, it enables pre-reading of
+memory mapped regions.
+
+See https://github.com/Perl/perl5/issues/18884 for details.
+
+
+Version 1.19 - 2020-12-23
+
+* Pre-read the memory mapped regions on systems that support it.
+
+This speeds up operations on big databases.
+
+* gdbmtool: tagged initialization of structured data
+
+Initializers for structured data can be given in tagged form, e.g.:
+
+   store somekey { status=2, id={a,u,x}, name="foo" }
+
+* Bugfixes:
+
+** Preserve locking type during database reorganization
+
+
+Version 1.18.1 - 2018-10-27
+
+* Fix debian bug 910911
+
+This restores backward compatibility with databases created by version
+1.8 (and some later versions, with mmapped I/O disabled).
+See https://bugs.debian.org/910911 for a detailed description.
+
+
+Version 1.18 - 2018-08-21
+
+* Bugfixes:
+
+** Fix directory entry validation
+See https://puszcza.gnu.org.ua/bugs/?402
+
+Directory validation function would falsely report corruption after
+several directory reallocations.
+
+** Fix improper use of GDBM_DEBUG macro
+See https://puszcza.gnu.org.ua/bugs/?401
+
+** Fix spurious error from gdbm_dump and gdbm_export
+
+The functions incorrectly treated as error the GDBM_ITEM_NOT_FOUND
+status, which is reported upon normal termination of iteration
+over database keys.
+
+** Make sure gdbm_sync always returns a meaningful value
+See https://puszcza.gnu.org.ua/bugs/?400
+
+Version 1.17 - 2018-07-30
+
+* int gdbm_close and gdbm_sync
+
+Both functions now return 0 on success. On error, they return -1
+and set gdbm_errno and errno to the appropriate error codes.
+
+* Fix bug in gdbm_dump function
+
+The function did not clear the GDBM_ITEM_NOT_FOUND error marker, which
+is set upon its normal termination.
+
+
+Version 1.16 - 2018-06-27
+
+* Maintain sorting order of the available block list after coalescing
+
+This is a very long-standing bug, dated back to the time when optional
+coalescing of available blocks with the newly released block was
+introduced. Merging the released block with an adjacent block of
+available space would clobber the sorting order of the available list.
+The bug was discovered due to strict database consistency checks,
+introduced in version 1.15.
+
+The fix introduced in this version will silently restore the proper
+sorting order of available block list before its use.
+
+* Improve block merging algorithm
+
+New implementation of block merging algorithm will correctly handle
+both left and right-adjacent blocks.
+
+
+Version 1.15 - 2018-06-15
+
+* Extensive database consistency checking
+
+GDBM tries to detect inconsistencies in input database files as
+early as possible. When an inconcistency is detected, a helpful
+diagnostics is returned and the database is marked as needing
+recovery. From this moment on, any GDBM function trying to access
+the database will immediately return error code (instead of
+eventually segfaulting as previous versions did). In order to
+reconstruct the database and return it to healthy state, the
+gdbm_recover function should be used.
+
+Special thanks to Lionel Debroux and Craig Young for investing
+their time and efforts in testing and providing valuable feedback.
+
+* Improved error checking
+
+* Removed gdbm-1.8.3 compatibility layer
+
+* Commands can be given to gdbmtool in the command line
+
+The syntax is:
+
+  gdbmtool DBNAME COMMAND [ARGS...]
+
+Multiple commands are separated by semicolon (take care to escape it),
+e.g.:
+
+  gdbmtool t.db count\; avail
+
+* Fixed data conversion bugs in storing structured keys or content
+
+* New member in the gdbm_recovery structure: duplicate_keys.
+
+Upon return from gdbm_recover, this member holds the number of keys
+that has not been recovered, because the same key had already been stored
+in the database. The actual number of stored keys is thus
+recovered_keys - duplicate_keys.
+
+* New error codes.
+
+  GDBM_BAD_BUCKET      "Malformed bucket header"
+  GDBM_BAD_HEADER      "Malformed database file header"
+  GDBM_BAD_AVAIL       "Malformed avail_block"
+  GDBM_BAD_HASH_TABLE  "Malformed hash table"
+  GDBM_BAD_DIR_ENTRY   "Invalid directory entry"
+
+
+Version 1.14.1 - 2018-01-03
+
+* Increment soname current version number.
+
+
+Version 1.14 - 2018-01-01
+
+* Make sure created databases are byte-for-byte reproducible
+
+This fixes two longstanding bugs: (1) when allocating database file
+header blocks, the unused memory is filled with zeroes; (2) when expanding
+a mmapped memory area, the added extent is filled with zeroes.
+
+* Fix build with --enable-gdbm-export
+
+* Make gdbm_error global variable thread safe.
+
+* Fix possible segmentation violation in gdbm_setopt
+
+* Fix handling of group headers in --help output.
+
+
+Version 1.13 - 2017-03-11
+
+* gdbm_fetch, gdbm_firstkey, and gdbm_nextkey behavior
+
+If the requested key was not found, these functions return datum with
+dptr pointing to NULL and set gdbm_errno to GDBM_ITEM_NOT_FOUND (in
+prior releases, gdbm_errno was set to GDBM_NO_ERROR),
+
+If an error occurred, dptr is set to NULL, and gdbm_errno to
+the error code.
+
+In any case gdbm_errno is guaranteed to have meaningful value upon
+return.
+
+* Error handling
+
+In previous versions of GDBM, fatal errors (such as write error while
+storing the key/data pair or bucket) caused immediate termination of
+the program via call to exit(3).  This is no longer the case.
+
+Starting from this version, if a fatal error occurrs while modifying
+the database file, that database is marked as needing recovery and
+gdbm_errno is set to GDBM_NEED_RECOVERY.  Calls to any GDBM functions,
+except gdbm_recover, will then return immediately with the same error
+code.
+
+The function gdbm_recover examines the database file and fixes
+eventual inconsistencies.  Upon successful return it clears the error
+state and makes the database operational again.
+
+For backward compatibility, the fatal_func argument to gdbm_open is
+retained and its functionality is not changed.  If it is not NULL, the
+new error handling procedures are disabled, the function it points to
+will be called upon fatal errors.  When it returns, exit(1) will be
+called.
+
+* Per-database error codes
+
+In addition to gdbm_error global variable, the most recent error state
+is saved in the GDBM_FILE structure.  This facilitates error handling
+when operating multiple GDBM databases simultaneously.
+
+The following new functions are implemented for manipulating error
+states:
+
+** gdbm_error gdbm_last_errno (GDBM_FILE dbf)
+
+Returns the code of the most recent error that occurred in the given database.
+
+** int gdbm_last_syserr (GDBM_FILE dbf)
+
+Returns the value the system errno variable had when the most recent
+error occurred.  This provides additional information for such error
+codes as GDBM_FILE_SEEK_ERROR, GDBM_FILE_WRITE_ERROR and the like.
+
+** void gdbm_clear_error (GDBM_FILE dbf)
+
+Clears the error state associated with the database file.
+
+** char const *gdbm_db_strerror (GDBM_FILE dbf)
+
+Returns textual description of the error.
+
+** int gdbm_needs_recovery (GDBM_FILE dbf)
+
+Returns true if the database file needs recovery.
+
+* New gdbm_open flag: GDBM_BSEXACT
+
+When creating a new database, the gdbm_open function will adjust the
+requested block size so that the block can hold integer number of
+directory entries.  Thus, the resulting block size can be bigger than
+the requested one.  If the GDBM_BSEXACT flag is set, this behavior is
+suppressed and gdbm_open will try to force exactly the requested block
+size.  If unable to do so, it will set the gdbm_errno variable to
+GDBM_BLOCK_SIZE_ERROR and return NULL.
+
+* New gdbm_setopt option: GDBM_GETBLOCKSIZE
+
+Returns the block size in bytes.  E.g.
+
+ int size;
+ if (gdbm_setopt (dbf, GDBM_GETBLOCKSIZE, &size, sizeof size))
+   abort ();
+ ...
+
+* New functions
+
+** GDBM_FILE gdbm_fd_open (int fd, const char *file_name, int block_size,
+		           int flags, void (*fatal_func) (const char *))
+
+Alternative function for opening a GDBM database.  The fd argument is
+the file descriptor of the database file obtained by a call to
+open(2), creat(2) or similar functions.  The descriptor is not dup'ed, and
+will be closed when the returned GDBM_FILE is closed.  Use dup(2) if
+that is not desirable.
+			   
+** int gdbm_copy_meta (GDBM_FILE dst, GDBM_FILE src)
+
+Copy meta-information (ownership and file permissions) from src to dst.
+
+* gdbmtool
+
+** Line editing in gdbmtool
+
+The gdbmtool utility now offers the usual line-editing facilities (if
+the package has been compiled with GNU Readline).
+
+** Keyboard shortcuts
+
+If the last entered command was "next", hitting the "Enter" key
+repeats it without arguments.
+
+* Magic file included
+
+The magic file suitable for use with the file(1) command is
+distributed with the package.  Its name is src/gdbm.magic.
+
+It is not installed by default, as its installation location differs
+considerably between various distributions.
+
+
+Version 1.12, 2016-05-16
+
+* New configuration variable COMPATINCLUDEDIR
+
+When used with --enable-libgdbm-compat, this variable points to the
+directory where the headers file dbm.h and ndbm.h will be installed.
+Use this variable to avoid conflicts with already installed headers.
+E.g.:
+
+ ./configure --enable-libgdbm-compat COMPATINCLUDEDIR=/usr/include/gdbm
+
+* Bugfixes
+ 
+
+Version 1.11, 2013-12-25
+
+* Improved dump format.
+
+A new dump format is implemented, which encodes all data in base64 and
+stores not only key/data pairs, but also the original database file
+metadata, such as file name, mode and ownership.  Files in this format
+can be sent without additional encapsulation over transmission
+channels that normally allow only ASCII data.  Dumps in this format
+allow for restoring an exact copy of the database, including file
+ownership and privileges.
+
+* New function: gdbm_count
+
+    int gdbm_count (GDBM_FILE *file, gdbm_count *count);
+
+Counts records in `file' and stores the result in the memory location
+pointed to by `count'.
+
+* New utilities: gdbm_dump and gdbm_load.
+
+Gdbm_dump creates a plain-text dump of the GDBM database.  This dump
+can be used to create an exact copy of the database afterward.
+
+The gdbm_load performs the reverse: given the dump file, it creates a
+GDBM database.  Apart from native GDBM dump formats, it also understands
+the format generated by Berkeley DB db_dump utility.  Thus, an easy
+way to convert a Berkeley DB database to GDBM is:
+
+   db_dump input.db | gdbm_load output.db
+
+* gdbmtool
+
+The gdbmtool utility allows you to examine, modify or create GDBM
+databases.  It provides an easy-to-use interactive shell and can
+be used for scripting.  One of the unique features of gdbmtool is that
+it allows to define datum structures for key and content parts, similarly
+to the C "struct" declarations, and to input and display such
+structured data.
+
+
+Version 1.10, 2011-11-13
+
+* Internationalization
+
+This version of GDBM is fully internationalized.  The following
+localizations are available: Finnish, German, Japanese, Polish and Ukrainian.
+
+* Support for close-on-exec flag in gdbm_open (see GDBM_CLOEXEC in the docs).
+
+* Improve testgdbm command system
+
+The testgdbm tool now supports multicharacter commands.
+
+* Bugfixes
+
+Bug numbers below refer to the tracker at <http://puszcza.gnu.org.ua/bugs/?N>
+
+** Bug #150.
+Tolerate I/O operations returning less bytes than expected.  Retry I/O
+if possible.
+
+** Bug #151
+Gdbm_open now initializes with zeros the memory allocated for file
+header.  Previous versions left uninitialized portions intact, so
+they contained whatever happened to be in that memory region at the
+moment of allocation.  This created undesired security implications.
+
+** Fix handling of NDBM databases in read-only mode.
+
+
+Version 1.9.1
+
+* Bugfix
+
+Improperly used preprocessor directive caused compilation failure
+when using gcc 4.4.4 or newer.
+
+
+Version 1.9, 2011-08-12
+
+* Use of mmap
+
+To speed up I/O operations, mmap(2) is used when available.
+It can be disabled at compile time using --disable-memory-mapped-io,
+and at run time by giving GDBM_NOMMAP flag to gdbm_open.
+
+* Changes in compatibility mode
+
+The changes below fix several long-standing bugs in
+ndbm compatibility code, which made it impossible to
+use GDBM with Sendmail and Postfix.  Now that they are
+fixed, GDBM can be used with these MTAs. 
+
+** Locking is disabled.
+
+Neither ndbm nor dbm functions lock their files.
+
+This bug was reported, in particular, in
+https://bugzilla.redhat.com/show_bug.cgi?id=663932
+
+** Do not link pag to dir.
+
+Instead of linking pag to dir as previous versions did, GDBM now
+creates a separate dir file.  Consequently, dbm_pagfno and
+dbm_dirfno return different file descriptors.
+
+When opening an existing database as a writer, GDBM determines
+if dir is linked to pag, and if so breaks the link and creates
+a new dir file.  When such a database is opened in a read-only
+mode, GDBM does not attempt to alter the link.
+
+* gdbm_setopt
+
+New options are implemented for use with gdbm_setopt function.
+In particular, a set of options is provided for retrieving various
+database parameters, such as the file name, memory mapping status,
+etc.
+
+* The testgdbm program is installed
+
+Testgdbm is an interactive tool for manipulating GDBM database files.
+It allows you to view or update existing databases, export
+them to the portable flat file format and to create new database files.
+
+* A testsuite is provided.
+
+* Improved documentation.
+
+Version 1.8.3
+
+* Various configure related changes and additional updates.
+
+Version 1.8.2
+
+* Allow `NEWDB'-opened databases to actually, well, store records.
+
+Version 1.8.1
+
+* Lots of bug fixes, including a data corruption bug.
+* Updated to current autoconf and libtool.
+* Moved the dbm/ndbm compatibility routines to libgdbm_compat.
+
+Version 1.8
+
+* Added GDBM_CENTFREE functionality and option.
+* Added GDBM_COALESCEBLKS functionality and option.
+* Added GDBM_NOLOCK flag.
+* Made ``fast'' mode the default, making GDBM_FAST obsolete, and adding
+  the GDBM_SYNC flag and GDBM_SYNCMODE option.
+* Switched to building with libtool.
+
+Version 1.7.3
+
+* Fixed a couple of last minute problems.
+
+Namely, no autoconf.h in version.c, and no GDBM_FASTMODE in gdbm.h!
+
+* Fixed some documentation bugs.
+
+Version 1.7.2
+
+* Enhanced portability and compile/installation changes.
+* Additional, "fast mode" related gdbm_setopt() option.
+* Growth problems bug fix.
+
+Version 1.7.1
+
+* Enhanced portabilty and compile/installation bug fixes.
+* Switched over to using an auto config header.
+* Slight documentation upgrade.
+
+Version 1.7
+
+* A new dynamic, delayed initialization, bucket cache.
+* New gdbm_setopt(), gdbm_exists(), and gdbm_strerror() routines.
+* Slightly improved dbm/ndbm compatibility.
+* Greatly improved portability to 64 or 16 bit machines.
+* Various bug fixes.
+
+Version 1.6
+
+* New documentation in both man and texinfo formats.
+* Bug fixes.
+* A New "writers" mode that does not fsync the database.
+* Uses Autoconf now.
+
+Version 1.5
+
+* Minor bug fixes.  See the ChangeLog.
+* Added gdbmconst.h to allow users to change the size of the
+* bucket cache in the systems.h file.
+
+Version 1.4
+
+* Mainly bug fixes
+* A define for "dbmclose()" was added to dbm.h for those few 
+  implementaions that need that call.
+* For details, see the ChangeLog.
+
+Version 1.0
+
+* Makefiles were combined into one and a few new things added to it.
+* Several minor bugs were fixed including a cache bug.
+* Two new calls (dbm_pagfno, dbm_dirfno) were added to the NDBM interface.
+* A conversion program from dbm files to gdbm files was added.
+* Reorganize was changed to allow complex file names. (dir/file form)
+* testgdbm, testndbm, and testdbm were modified to return key and data
+  pairs where needed and to take an optional file name as an argument.
+  testgdbm had some command characters changed.
+* The DBM and NDBM interfaces were separated.
+* An include file for dbm users was added. (dbm.h)
+* The include file for ndbm users was renamed ndbm.h. (It was gndbm.h.)
+
+Version 0.9
+
+* The hash function changed.
+* The file format changed.
+* There was a complete rewrite of falloc.c.
+* There were added compatiblity routines for ndbm.
+* The file names for dbm compatibility routines were made to look like dbm.
+* Test programs changed.
+* Support for System V.
+* Various other small changes.
+* The need for recovery and associated code was removed.
+
+
+----------------------------------------------------------------------
+Copyright information:
+
+Copyright (C) 1990-2021 Free Software Foundation, Inc.
+
+   Permission is granted to anyone to make or distribute verbatim copies
+   of this document as received, in any medium, provided that the
+   copyright notice and this permission notice are preserved,
+   thus giving the recipient permission to redistribute in turn.
+
+   Permission is granted to distribute modified versions
+   of this document, or of portions of it,
+   under the above conditions, provided also that they
+   carry prominent notices stating who last changed them.
+
+Local variables:
+mode: outline
+paragraph-separate: "[ 	]*$"
+eval: (add-hook 'write-file-functions 'time-stamp)
+time-stamp-start: "changes. "
+time-stamp-format: "%:y-%02m-%02d"
+time-stamp-end: "\n"
+end:

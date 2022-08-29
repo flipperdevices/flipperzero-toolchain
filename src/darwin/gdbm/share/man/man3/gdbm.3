@@ -1,0 +1,1169 @@
+.\" This file is part of GDBM.
+.\" Copyright (C) 2011-2022 Free Software Foundation, Inc.
+.\"
+.\" GDBM is free software; you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation; either version 3, or (at your option)
+.\" any later version.
+.\"
+.\" GDBM is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with GDBM. If not, see <http://www.gnu.org/licenses/>. */
+.TH GDBM 3 "October 18, 2021" "GDBM" "GDBM User Reference"
+.SH NAME
+GDBM \- The GNU database manager.  Includes \fBdbm\fR and \fBndbm\fR
+compatibility.
+.SH SYNOPSIS
+.nf
+.B #include <gdbm.h>
+.sp
+.BI "extern gdbm_error"  " gdbm_errno";
+.br
+.BI "extern char *" gdbm_version ;
+.br
+.BI "extern int "  gdbm_version[3] ;
+.br
+.BI "GDBM_FILE gdbm_open (const char *" name ", int " block_size ", "
+.ti +21
+.BI     "int " flags ", int " mode ", "
+.ti +21
+.BI "void (*" fatal_func ")(const char *))";
+.br
+.BI "int gdbm_close (GDBM_FILE " dbf ");"
+.br
+.BI "int gdbm_store (GDBM_FILE " dbf ", datum " key ", datum " content ", int " flag ");"
+.br
+.BI "datum gdbm_fetch (GDBM_FILE " dbf ", datum " key ");"
+.br
+.BI "int gdbm_delete (GDBM_FILE " dbf ", datum " key ");"
+.br
+.BI "datum gdbm_firstkey (GDBM_FILE " dbf ");"
+.br
+.BI "datum gdbm_nextkey (GDBM_FILE " dbf ", datum " key ");"
+.br
+.BI "int gdbm_recover (GDBM_FILE " dbf ", gdbm_recovery *" rcvr ", int" flags ");"
+.br
+.BI "int gdbm_reorganize (GDBM_FILE " dbf ");"
+.br
+.BI "int gdbm_sync (GDBM_FILE " dbf ");"
+.br
+.BI "int gdbm_exists (GDBM_FILE " dbf ", datum " key ");"
+.br
+.BI "const char *gdbm_strerror (gdbm_error " errno ");"
+.br
+.BI "int gdbm_setopt (GDBM_FILE " dbf ", int " option ", int " value ", int " size );
+.br
+.BI "int gdbm_fdesc (GDBM_FILE " dbf );
+.br
+.BI "int gdbm_count (GDBM_FILE " dbf ", gdbm_count_t *" pcount ");"
+.br
+.BI "int gdbm_bucket_count (GDBM_FILE " dbf ", size_t *" pcount ");"
+.br
+.BI "int gdbm_avail_verify (GDBM_FILE " dbf ");"
+.PP
+.SS Crash Tolerance (see below):
+.PP
+.BI "int gdbm_failure_atomic (GDBM_FILE " dbf ", const char *" even ", const char *" odd ");"
+.br
+.BI "int gdbm_latest_snapshot (const char *" even ", const char *" odd ", const char **" result ");"
+.SH NOTICE
+This manpage is a short description of the \fBGDBM\fR library.
+For a detailed discussion, including examples and usage
+recommendations, refer to the \fBGDBM Manual\fR available in
+Texinfo format.  To access it, run:
+
+  \fBinfo gdbm\fR
+
+The documentation is also available online at
+
+  \fBhttps://www.gnu.org/software/gdbm/manual\fR
+  
+Should any discrepancies occur between this manpage and the
+\fBGDBM Manual\fR, the later shall be considered the authoritative
+source.
+.SH DESCRIPTION
+\fBGNU dbm\fR is a library of routines that manages data files that contain
+key/data pairs.  The access provided is that of storing, 
+retrieval, and deletion by key and a non-sorted traversal of all
+keys.  A process is allowed to use multiple data files at the
+same time.
+.SS Opening a database
+A process that opens a gdbm file is designated as a "reader" or a
+"writer".  Only one writer may open a gdbm file and many readers may
+open the file.  Readers and writers can not open the gdbm file at the
+same time. The procedure for opening a gdbm file is:
+.PP
+.BI "GDBM_FILE gdbm_open (const char *" name ", int " block_size ", "
+.ti +21
+.BI     "int " flags ", int " mode ", "
+.ti +21
+.BI "void (*" fatal_func ")(const char *))";
+.PP
+\fIName\fR is the name of the file (the complete name,
+\fBgdbm\fR does not append any characters to this name).
+.PP
+\fIBlock_size\fR is the size of a single transfer from disk to
+memory.  If the value is less than 512, the file system block size is
+used instead.  The size is adjusted so that the block can hold exact
+number of directory entries, so that the effective block size can be
+slightly greater than requested.  This adjustment is disabled if the
+\fBGDBM_BSEXACT\fR \fIflag\fR is used.
+.PP
+The \fIflags\fR parameter is a bitmask, composed of the \fIaccess
+mode\fR and one or more modifier flags.  The \fIaccess mode\fR bit
+designates the process as a reader or writer and must be one of the following:
+.TP
+.B GDBM_READER
+reader
+.TP
+.B GDBM_WRITER
+writer
+.TP
+.B GDBM_WRCREAT
+writer - if database does not exist create new one
+.TP
+.B GDBM_NEWDB
+writer - create new database regardless if one exists
+.PP
+Additional flags (\fImodifiers\fR) can be combined with these values
+by bitwise \fBOR\fR.  Not all of them are meaningful with all access
+modes.
+.PP
+Flags that are valid for any value of access mode are:
+.TP
+.B GDBM_CLOEXEC
+Set the \fIclose-on-exec\fR flag on the database file descriptor.
+.TP
+.B GDBM_NOLOCK
+Prevents the library from performing any locking on the database file.
+.TP
+.B GDBM_NOMMAP
+Instructs \fBgdbm_open\fR to disable the use of
+.BR mmap (2).
+.TP
+.B GDBM_PREREAD
+When mapping GDBM file to memory, read its contents immediately,
+instead of when needed (\fIprefault reading\fR).  This can be
+advantageous if you open a \fIread-only\fR database and are going to
+do a lot of look-ups on it.  In this case entire database will be
+read at once and searches will operate on an in-memory copy.  In
+contrast, \fBGDBM_PREREAD\fR should not be used if you open a database
+(even in read-only mode) only to retrieve a couple of keys.
+.sp
+Finally, never use \fBGDBM_PREREAD\fR when opening a database for
+updates, especially for inserts: this will degrade performance.
+.sp
+This flag has no effect if \fBGDBM_NOMMAP\fR is given, or if the
+operating system does not support prefault reading.  It is known to
+work on Linux and FreeBSD kernels. 					     
+.TP
+.B GDBM_XVERIFY
+Enable additional consistency checks.  With this flag, eventual
+corruptions of the database are discovered when opening it, instead of
+when a corrupted structure is read during normal operation.  However,
+on large databases, it can slow down the opening process.
+.PP
+The following additional flags are valid when the database is opened
+for writing (\fBGDBM_WRITER\fR, \fBGDBM_WRCREAT\fR, or
+\fBGDBM_NEWDB\fR):
+.TP
+.B GDBM_SYNC
+Causes all database operations to be synchronized to the disk.
+.sp
+\fBNOTE\fR: this option entails severe performance degradation and
+does not necessarily ensure that the resulting database state is
+consistent, therefore we discourage its use.  For a discussion of how
+to ensure database consistency with minimal performance overhead, see
+.B CRASH TOLERANCE
+below.
+.TP
+.B GDBM_FAST
+A reverse of \fBGDBM_SYNC\fR: synchronize writes only when needed.
+This is the default.  This flag is provided only for compatibility
+with previous versions of GDBM.
+.PP
+The following flags can be used together with \fBGDBM_NEWDB\fR.  They
+also take effect when used with \fBGDBM_WRCREAT\fR, if the requested
+database file doesn't exist:
+.TP
+.B GDBM_BSEXACT
+If this flag is set and the requested \fIblock_size\fR value cannot
+be used, \fBgdbm_open\fR will refuse to create the database.  In this
+case it will set the \fBgdbm_errno\fR variable to
+\fBGDBM_BLOCK_SIZE_ERROR\fR and return \fBNULL\fR.
+.sp
+Without this flag, \fBgdbm_open\fR will silently adjust the
+\fIblock_size\fR to a usable value, as described above.
+.TP
+.B GDBM_NUMSYNC
+Create new database in \fIextended database format\fR, a format best
+suited for effective crash recovery.  For a detailed discussion, see
+the
+.B CRASH RECOVERY
+chapter below.
+.PP
+\fIMode\fR is the file mode (see
+.BR chmod (2)
+and
+.BR open (2)).
+It is used if the file is created.
+.PP
+\fIFatal_func\fR is a function to be called when \fBgdbm\fR if
+it encounters a fatal error.  This parameter is deprecated and must
+always be \fBNULL\fR.
+.PP
+The return value is the pointer needed by all other routines to
+access that gdbm file.  If the return is the \fBNULL\fR pointer,
+\fBgdbm_open\fR was not successful.  In this case, the reason of the
+failure can be found in the \fIgdbm_errno\fR variable.  If the
+following call returns \fItrue\fR (non-zero value):
+.sp
+.nf
+.in +5
+  gdbm_check_syserr(gdbm_open)
+.in
+.fi
+.PP
+the system \fIerrno\fR variable must be examined in order to obtain more
+detail about the failure.
+.PP
+.BI "GDBM_FILE gdbm_fd_open (int " FD ", const char *" name ", int " block_size ", "
+.ti +21
+.BI     "int " flags ", int " mode ", "
+.ti +21
+.BI "void (*" fatal_func ")(const char *))";
+.PP
+This is an alternative entry point to \fBgdbm_open\fR.  \fIFD\fR is a
+valid file descriptor obtained as a result of a call to
+.BR open (2)
+or
+.BR creat (2).
+The function opens (or creates) a \fGDBM\fR database this descriptor
+refers to.  The descriptor is not \fBdup\fR'ed, and will be closed
+when the returned \fBGDBM_FILE\fR is closed.  Use
+.B dup (2)
+if that is not desirable.
+.PP
+In case of error, the function behaves like \fBgdbm_open\fR and
+\fBdoes not close\fR \fIFD\fR.  This can be altered by the following
+value passed in \fIflags\fR:
+.TP
+.B GDBM_CLOERROR
+Close \fIFD\fR before exiting on error.
+
+The rest of arguments are the same as for \fBgdbm_open\fR.
+.SS Calling convention
+.PP
+All \fBGDBM\fR functions take as their first parameter the
+\fIdatabase handle\fR (\fBGDBM_FILE\fR), returned from \fBgdbm_open\fR
+or \fBgdbm_fd_open\fR.
+.PP
+Any value stored in the \fBGDBM\fR database is described by
+\fIdatum\fR, an aggregate type defined as:
+.sp
+.nf
+.in +5
+typedef struct
+{
+  char *dptr;
+  int   dsize;
+} datum;
+.in
+.fi
+.PP
+The \fIdptr\fR field points to the actual data.  Its type is
+\fBchar *\fR for historical reasons.  Actually it should have been
+typed
+\fBvoid *\fR.  Programmers are free to store data of arbitrary
+complexity, both scalar and aggregate, in this field.
+.PP
+The \fIdsize\fR field contains the number of bytes stored in
+\fBdptr\fR.
+.PP
+The \fBdatum\fR type is used to describe both \fIkeys\fR and
+\fIcontent\fR (values) in the database.  Values of this type can
+be passed as arguments or returned from \fBGDBM\fR function calls.
+.PP
+\fBGDBM\fR functions that return \fBdatum\fR indicate failure by setting
+its \fIdptr\fR field to \fBNULL\fR.
+.PP
+Functions returning integer value, indicate success by returning
+0 and failure by returning a non-zero value (the only exception to this
+rule is \fBgdbm_exists\fR, for which the return value is reversed).
+.PP
+If the returned value indicates failure, the \fBgdbm_errno\fR variable
+contains an integer value indicating what went wrong.  A similar value
+is associated with the \fIdbf\fR handle and can be accessed using the
+\fBgdbm_last_errno\fR function.  Immediately after return from a
+function, both values are exactly equal.  Subsequent \fBGDBM\fR calls
+with another \fIdbf\fR as argument may alter the value of the global
+\fBgdbm_errno\fR, but the value returned by \fBgdbm_last_errno\fR will
+always indicate the most recent code of an error that occurred for
+\fIthat particular database\fR.  Programmers are encouraged to use
+such per-database error codes.
+.PP
+Sometimes the actual reason of the failure can be clarified by
+examining the system \fBerrno\fR value.  To make sure its value is
+meaningful for a given \fBGDBM\fR error code, use the
+\fBgdbm_check_syserr\fR function.  The function takes error code as
+argument and returns 1 if the \fBerrno\fR is meaningful for that
+error, or 0 if it is irrelevant.
+.PP
+Similarly to \fBgdbm_errno\fR, the latest \fBerrno\fR value associated
+with a particular database can be obtained using the
+\fBgdbm_last_syserr\fR function.
+.PP
+The \fBgdbm_clear_error\fR clears the error indicator (both \fBGDBM\fR
+and system error codes) associated with a database handle.
+.PP
+Some critical errors leave the database in a \fIstructurally
+inconsistent state\fR.  If that happens, all subsequent \fBGDBM\fR calls
+accessing that database will fail with the \fBGDBM\fR error code of
+\fBGDBM_NEED_RECOVERY\fR (a special function \fBgdbm_needs_recovery\fR
+is also provided, which returns true if the database handle given as
+its argument is structurally inconsistent).  To return such
+databases to consistent state, use the \fBgdbm_recover\fR function
+(see below).
+.PP
+The \fBGDBM_NEED_RECOVERY\fR error cannot be cleared using
+\fBgdbm_clear_error\fR.
+.SS Error functions
+This section describes the error handling functions outlined above.
+.TP
+.BI "gdbm_error gdbm_last_errno (GDBM_FILE " dbf ")"
+Returns the error code of the most recent failure encountered when operating
+on \fIdbf\fR.
+.TP
+.BI "int gdbm_last_syserr (GDBM_FILE " dbf ")"
+Returns the value of the system \fBerrno\fR variable associated with
+the most recent failure that occurred on \fIdbf\fR.
+.sp
+Notice that not all \fBgdbm_error\fR codes have a relevant system
+error code.  Use the following function to determine if a given code has.
+.TP
+.BI "int gdbm_check_syserr (gdbm_error " err ")"
+Returns \fB1\fR, if system \fBerrno\fR value should be checked to get more
+info on the error described by GDBM code \fIerr\fR.
+.TP
+.BI "void gdbm_clear_error (GDBM_FILE " dbf ")"
+Clears the error state for the database \fIdbf\fR.  This function is
+called implicitly upon entry to any GDBM function that operates on
+\fBGDBM_FILE\fR.
+.sp
+The \fBGDBM_NEED_RECOVERY\fR error cannot be cleared.
+.TP
+.BI "int gdbm_needs_recovery (GDBM_FILE " dbf ")"
+Return \fB1\fR if the database file \fIdbf\fR is in inconsistent state
+and needs recovery.
+.TP
+.BI "const char *gdbm_strerror (gdbm_error " err ")"
+Returns a textual description of the error code \fIerr\fR.
+.TP
+.BI "const char *gdbm_db_strerror (GDBM_FILE " dbf ")"
+Returns a textual description of the recent error in database
+\fIdbf\fR.  This description includes the system \fBerrno\fR value, if
+relevant.
+.SS Closing the database
+It is important that every database file opened is also closed.  This
+is needed to update the reader/writer count on the file.  This is done by:
+.TP
+.BI "int gdbm_close (GDBM_FILE " dbf ");"
+.SS Database lookups
+.TP
+.BI "int gdbm_exists (GDBM_FILE " dbf ", datum " key );
+If the \fIkey\fR is found within the database, the return value 
+will be \fItrue\fR (\fB1\fR).  If nothing appropriate is found, \fIfalse\fR
+(\fB0\fR) is returned and \fBgdbm_errno\fR set to \fBGDBM_NO_ERROR\fR.
+.sp
+On error, returns 0 and sets \fBgdbm_errno\fR.
+.TP
+.BI "datum gdbm_fetch (GDBM_FILE " dbf ", datum " key );
+\fIDbf\fR is the pointer returned by \fBgdbm_open\fR.  \fIKey\fR is
+the key data.
+.sp
+If the \fIdptr\fR element of the return value is \fBNULL\fR, the
+\fBgdbm_errno\fR variable should be examined.  The value of 
+\fBGDBM_ITEM_NOT_FOUND\fR means no data was found for that \fIkey\fR.
+Other value means an error occurred.
+.sp
+Otherwise the return value is a pointer to the found data.
+The storage space for the \fIdptr\fR element is allocated using
+\fBmalloc(3)\fR.  \fBGDBM\fR does not automatically free this data.
+It is the programmer's responsibility to free this storage when it is
+no longer needed.
+.SS Iterating over the database
+The following two routines allow for iterating over all items in the
+database.  Such iteration is not key sequential, but it is
+guaranteed to visit every key in the database exactly once.  (The
+order has to do with the hash values.)
+.TP
+.BI "datum gdbm_firstkey (GDBM_FILE " dbf ");"
+Returns first key in the database.
+.TP
+.BI "datum gdbm_nextkey (GDBM_FILE " dbf ", datum " key );
+Given a \fIkey\fR, returns the database key that follows it.  End of
+iteration is marked by returning \fIdatum\fR with \fIdptr\fR field set
+to \fBNULL\fR and setting the \fBgdbm_errno\fR value to
+\fBGDBM_ITEM_NOT_FOUND\fR.
+.PP
+After successful return from both functions, \fIdptr\fR points to data
+allocated by
+.BR malloc (3).
+It is the caller responsibility to free the data when no longer
+needed.
+.PP
+A typical iteration loop looks like:
+.sp
+.nf
+.in +5
+datum key, nextkey, content;
+key = gdbm_firstkey (dbf);
+while (key.dptr)
+  {
+    content = gdbm_fetch (dbf, key);
+    /* Do something with key and/or content */
+    nextkey = gdbm_nextkey (dbf, key);
+    free (key.dptr);
+    key = nextkey;
+  }
+.in
+.fi
+.PP
+These functions are intended to visit the database in read-only
+algorithms.  Avoid any database modifications within the iteration loop.
+File \fIvisiting\fR is based on a hash table.  The \fBgdbm_delete\fR and,
+in most cases, \fBgdbm_store\fR, functions rearrange the hash table to
+make sure that any collisions in the table do not leave some item
+`un-findable'.  Thus, a call to either of these functions changes
+the order in which the keys are ordered.  Therefore, these functions
+should not be used when iterating over all the keys in the database.
+For example, the following loop is wrong: it is possible that some keys
+will not be visited or will be visited twice if it is executed: 
+.sp
+.nf
+.in +5
+key = gdbm_firstkey (dbf);
+while (key.dptr)
+  {
+    nextkey = gdbm_nextkey (dbf, key);
+    if (some condition)
+      gdbm_delete ( dbf, key );
+    free (key.dptr);
+    key = nextkey;
+  }
+.in
+.fi
+.SS Updating the database
+.TP
+.BI "int gdbm_store (GDBM_FILE " dbf ", datum " key ", datum " content ", int " flag );
+\fIDbf\fR is the pointer returned by \fBgdbm_open\fR.  \fIKey\fR is the
+key data.  \fIContent\fR is the data to be associated with the \fIkey\fR.
+\fIFlag\fR can have one of the following values:
+.RS 4
+.TP
+.B GDBM_INSERT
+Insert only, generate an error if key exists;
+.TP
+.B GDBM_REPLACE
+Replace contents if key exists.
+.RE
+.IP
+The function returns 0 on success and \-1 on failure.  If the key
+already exists in the database and the \fIflag\fR is
+\fBGDBM_INSERT\fR, the function does not modify the database.  It sets
+\fBgdbm_errno\fR to \fBGDBM_CANNOT_REPLACE\fR and returns 1.
+.TP
+.BI "int gdbm_delete (GDBM_FILE " dbf ", datum " key );
+Looks up and deletes the given \fIkey\fR from the database \fIdbf\fR.
+.sp
+The return value is 0 if there was a successful delete or \-1 on
+error.  In the latter case, the \fBgdbm_errno\fR value
+\fBGDBM_ITEM_NOT_FOUND\fR indicates that the key is not present in the
+database.  Other \fBgdbm_errno\fR values indicate failure.
+.SS Recovering structural consistency
+If a function leaves the database in structurally inconsistent state,
+it can be recovered using the \fBgdbm_recover\fR function.
+.TP
+.BI "int gdbm_recover (GDBM_FILE " dbf ", gdbm_recovery * " rcvr ", int " flags ")"
+Check the database file DBF and fix eventual inconsistencies.  The
+\fIrcvr\fR argument can be used both to control the recovery and to
+return additional statistics about the process, as indicated by
+\fIflags\fR.  For a detailed discussion of these arguments and their
+usage, see the \fBGDBM Manual\fR, chapter \fBRecovering structural
+consistency\fR.
+.sp
+You can pass \fBNULL\fR as \fIrcvr\fR and \fB0\fR as \fIflags\fR, if
+no such control is needed.
+.sp
+By default, this function first checks the database for
+inconsistencies and attempts recovery only if some were found.  The
+special \fIflags\fR bit \fBGDBM_RCVR_FORCE\fR instructs
+\fBgdbm_recovery\fR to skip this check and to perform database
+recovery unconditionally.
+.SS Export and import
+\fBGDBM\fR database files can be exported (dumped) to so called \fIflat
+files\fR or imported (loaded) from them.  A flat file contains exactly
+the same data as the original database, but it cannot be used for
+searches or updates.  Its purpose is to keep the data from the
+database for restoring it when the need arrives.  As such, flat files
+are used for backup purposes, and for sending databases over the wire.
+.PP
+As of \fBGDBM\fR version 1.21, there are two flat file formats.  The
+\fBASCII\fR file format encodes all data in Base64 and stores
+not only key/data pairs, but also the original database file metadata,
+such as file name, mode and ownership.  Files in this format can be
+sent without additional encapsulation over transmission channels that
+normally allow only ASCII data, such as, e.g. SMTP.  Due to additional
+metadata they allow for restoring an exact copy of the database,
+including file ownership and privileges, which is especially important
+if the database in question contained some security-related data.
+This is the preferred format.
+.PP
+Another flat file format is the \fBbinary\fR format.  It stores only
+key/data pairs and does not keep information about the database file
+itself.  It cannot be used to copy databases between different
+architectures.  The binary format was introduced in \fBGDBM\fR version
+1.9.1 and is retained mainly for backward compatibility.
+.PP
+The following functions are used to export or import \fBGDBM\fR
+database files.
+.TP
+.BI "int gdbm_dump (GDBM_FILE " dbf ", const char *" filename ","
+.PD 0
+.TP
+.ti +15
+.BI "int " format ", int " open_flag ", int " mode ")"
+.PD
+Dumps the database file \fIdbf\fR to the file \fIfilename\fR in
+requested \fIformat\fR.  Allowed values for \fIformat\fR are:
+.BR GDBM_DUMP_FMT_ASCII ,
+to create an ASCII dump file, and
+.BR GDBM_DUMP_FMT_BINARY ,
+to create a binary dump.
+
+The value of \fIopen_flag\fR tells \fBgdbm_dump\fR what to do if
+\fIfilename\fR already exists.  If it is \fBGDBM_NEWDB\fR, the
+function will create a new output file, replacing it if it already
+exists.  If its value is \fBGDBM_WRCREAT\fR, the file will be created
+if it does not exist.  If it does exist, \fBgdbm_dump\fR will return
+error.
+
+The file mode to use when creating the output file is defined by the
+\fImode\fR parameter.  Its meaning is the same as for
+.BR open (2).
+.TP
+.BI "int gdbm_load (GDBM_FILE *" pdbf ", const char *" filename ","
+.PD 0
+.TP
+.ti +15
+.BI "int " flag ", int " meta_mask ", unsigned long *" errline ")"
+.PD
+Loads data from the dump file \fIfilename\fR into the database pointed
+to by \fIpdbf\fR.  If \fIpdbf\fR is \fBNULL\fR, the function will try
+to create a new database.  On success, the new \fBGDBM_FILE\fR object
+will be stored in the memory location pointed to by \fIpdbf\fR.  If
+the dump file carries no information about the original database file
+name, the function will set \fBgdbm_errno\fR to \fBGDBM_NO_DBNAME\fR
+and return -1, indicating failure.
+
+Otherwise, if \fIpdbf\fR points to an already open \fBGDBM_FILE\fR,
+the function will load data from \fIfilename\fR into that database.
+
+The \fIflag\fR parameter controls the function behavior if a key
+from the dump file already exists in the database.  See the
+\fBgdbm_store\fR function for its possible values.
+
+The \fImeta_mask\fR parameter can be used to disable restoring certain
+bits of file's meta-data from the information in the input dump file.
+It is a binary OR of zero or more of the following:
+.RS +4
+.TP
+.B GDBM_META_MASK_MODE
+Do not restore file mode.
+.TP
+.B GDBM_META_MASK_OWNER
+Do not restore file owner.
+.RE
+.SS Other functions
+.TP  
+.BI "int gdbm_reorganize (GDBM_FILE " dbf ");"
+If you have had a lot of deletions and would like to shrink the space
+used by the \fBGDBM\fR file, this routine will reorganize the
+database.
+.TP
+.BI "int gdbm_sync (GDBM_FILE " dbf ");"
+Synchronizes the changes in \fIdbf\fR with its disk file.
+.sp
+It will not return until the disk file state is synchronized with the
+in-memory state of the database.
+.TP
+.BI "int gdbm_setopt (GDBM_FILE " dbf ", int " option ", void *" value ", int " size );
+Query or change some parameter of an already opened database.  The
+\fIoption\fR argument defines what parameter to set or retrieve.  If
+the \fIset\fR operation is requested, \fIvalue\fR points to the new
+value.  Its actual data type depends on \fIoption\fR.  If the
+\fIget\fR operation is requested, \fIvalue\fR points to a memory
+region where to store the return value.  In both cases, \fIsize\fR
+contains the actual size of the memory pointed to by \fIvalue\fR.
+.sp
+Possible values of \fIoption\fR are:
+.RS +4
+.TP
+.B GDBM_SETCACHESIZE
+.TQ
+.B GDBM_CACHESIZE
+Set the size of the internal bucket cache.  The \fIvalue\fR should
+point to a \fBsize_t\fR holding the desired cache size, or the
+constant \fBGDBM_CACHE_AUTO\fR, to select the best cache size
+automatically.
+
+By default, a newly open database is configured to adapt the cache
+size to the number of index buckets in the database file.  This
+provides for the best performance.
+
+Use this option if you wish to limit the memory usage at the expense
+of performance.  If you chose to do so, please bear in mind that cache
+becomes effective when its size is greater then 2/3 of the number of
+index bucket counts in the database.  The best performance results are
+achieved when cache size equals the number of buckets.
+.TP
+.B GDBM_GETCACHESIZE
+Return the size of the internal bucket cache.  The \fIvalue\fR should
+point to a \fBsize_t\fR variable, where the size will be stored.
+.TP
+.B GDBM_GETFLAGS
+Return the flags describing current state of the database.  The
+\fIvalue\fR should point to an \fBint\fR variable where to store the
+flags.  On success, its value will be similar to the flags used when
+opening the database, except that it will reflect the current state
+(which may have been altered by another calls to \fBgdbm_setopt\fR).
+.TP
+.B GDBM_FASTMODE
+Enable or disable the \fIfast writes mode\fR, similar to the
+\fBGDBM_FAST\fR option to \fBgdbm_open\fR.
+
+This option is retained for compatibility with previous versions of
+\fBGDBM\fR.
+.TP
+.B GDBM_SETSYNCMODE
+.TQ
+.B GDBM_SYNCMODE
+Turn on or off immediate disk synchronization after updates.  The
+\fIvalue\fR should point to an integer: 1 to turn synchronization on,
+and 0 to turn it off.
+
+\fBNOTE\fR: setting this option entails severe performance degradation
+and does not necessarily ensure that the resulting database state is
+consistent, therefore we discourage its use.  For a discussion of how
+to ensure database consistency with minimal performance overhead, see
+.B CRASH TOLERANCE
+below.
+.TP
+.B GDBM_GETSYNCMODE
+Return the current synchronization status.  The \fIvalue\fR should
+point to an \fBint\fR where the status will be stored.
+.TP
+.B GDBM_SETCENTFREE
+.TQ
+.B GDBM_CENTFREE
+Enable or disable central free block pool.  The default is off,
+which is how previous versions of \fBGDBM\fR handled free blocks.  If
+set, this option causes all subsequent free blocks to be placed in the
+\fIglobal\fR pool, allowing (in theory) more file space to be reused
+more quickly.  The \fIvalue\fR should point to an integer: \fBTRUE\fR to
+turn central block pool on, and \fBFALSE\fR to turn it off.
+
+The \fBGDBM_CENTFREE\fR alias is provided for compatibility with
+earlier versions.
+.TP
+.B GDBM_SETCOALESCEBLKS
+.TQ
+.B GDBM_COALESCEBLKS
+Set free block merging to either on or off.  The default is off, which
+is how previous versions of \fBGDBM\fR handled free blocks.  If set,
+this option causes adjacent free blocks to be merged.  This can become
+a CPU expensive process with time, though, especially if used in
+conjunction with \fBGDBM_CENTFREE\fR.  The \fIvalue\fR should point 
+to an integer: \fBTRUE\fR to turn free block merging on, and \fBFALSE\fR to
+turn it off.
+.TP
+.B GDBM_GETCOALESCEBLKS
+Return the current status of free block merging.  The \fIvalue\fR should
+point to an \fBint\fR where the status will be stored.
+.TP
+.B GDBM_SETMAXMAPSIZE
+Sets maximum size of a memory mapped region.  The \fIvalue\fR should
+point to a value of type \fBsize_t\fR, \fBunsigned long\fR or
+\fBunsigned\fR.  The actual value is rounded to the nearest page
+boundary (the page size is obtained from \fBsysconf(_SC_PAGESIZE)\fR).
+.TP
+.B GDBM_GETMAXMAPSIZE
+Return the maximum size of a memory mapped region.  The \fIvalue\fR should
+point to a value of type \fBsize_t\fR where to return the data.
+.TP
+.B GDBM_SETMMAP
+Enable or disable memory mapping mode.  The \fIvalue\fR should point
+to an integer: \fBTRUE\fR to enable memory mapping or \fBFALSE\fR to
+disable it.
+.TP
+.B GDBM_GETMMAP
+Check whether memory mapping is enabled.  The \fIvalue\fR should point
+to an integer where to return the status.
+.TP
+.B GDBM_GETDBNAME
+Return the name of the database disk file.  The \fIvalue\fR should
+point to a variable of type \fBchar**\fR.  A pointer to the newly
+allocated copy of the file name will be placed there.  The caller is
+responsible for freeing this memory when no longer needed.
+.TP
+.B GDBM_GETBLOCKSIZE
+Return the block size in bytes.  The \fIvalue\fR should point to \fBint\fR.
+.RE
+.TP
+.BI "int gdbm_fdesc (GDBM_FILE " dbf );
+Returns the file descriptor of the database \fIdbf\fR.
+.SH CRASH TOLERANCE
+By default \fBGNU dbm\fR does not protect the integrity of its
+databases from corruption or destruction due to failures such as
+power outages, operating system kernel panics, or application process
+crashes.  Such failures could damage or destroy the underlying
+database.
+.PP
+Starting with release 1.21 \fBGNU dbm\fR includes a mechanism that,
+if used correctly, enables post-crash recovery to a consistent state
+of the underlying database.  This mechanism requires OS and
+filesystem support and must be requested when \fBgdbm\fR is compiled.
+The crash-tolerance mechanism is a "pure opt-in" feature, in the
+sense that it has no effects whatsoever except on those applications
+that explicitly request it.  For details, see the chapter
+.B "Crash Tolerance"
+in the
+.BR "GDBM manual" .
+.SH GLOBAL VARIABLES
+.TP
+.B gdbm_error gdbm_errno
+This variable contains code of the most recent error that occurred.
+Note, that it is not C variable in the proper sense: you can use its
+value, assign any value to it, but taking its address will result in
+syntax error.  It is a per-thread memory location.
+.TP
+.B const char *gdbm_version
+A string containing the library version number and build date.
+.TP
+.B int const gdbm_version_number[3]
+This variable contains library version numbers: major, minor, and
+patchlevel.
+.SH VERSIONING
+The version information is kept in two places.  The version of the
+library is kept in the \fBgdbm_version_number\fR variable, described
+above.  Additionally, the header file \fBgdbm.h\fR defines the
+following macros:
+.TP
+.B GDBM_VERSION_MAJOR
+Major version number.
+.TP
+.B GDBM_VERSION_MINOR
+Minor version number.
+.TP
+.B GDBM_VERSION_PATCH
+Patchlevel number.  \fB0\fR means no patchlevel.
+.PP
+You can use this to compare whether your header file corresponds to
+the library the program is linked with.
+.PP
+The following function can be used to compare two version numbers:
+.TP
+.BI "int gdbm_version_cmp (int const " a "[3], int const " b "[3])"
+Compare two version numbers formatted as \fBgdbm_version_number\fR.
+Return negative number if \fBa\fR is older than \fBb\fR, positive
+number if \fBa\fR is newer than \fBb\fR, and 0 if they are equal.
+.SH ERROR CODES
+.TP
+.B GDBM_NO_ERROR
+No error occurred.
+.TP
+.B GDBM_MALLOC_ERROR
+Memory allocation failed.
+.TP
+.B GDBM_BLOCK_SIZE_ERROR
+This error is set by the \fBgdbm_open\fR function, if
+the value of its \fIblock_size\fR argument is incorrect and the
+\fBGDBM_BSEXACT\fR flag is set.
+.TP
+.B GDBM_FILE_OPEN_ERROR
+The library was not able to open a disk file.  This can be set by
+\fBgdbm_open\fR, \fBgdbm_fd_open\fR, \fBgdbm_dump\fR and
+\fBgdbm_load\fR functions.
+.sp
+Inspect the value of the system \fBerrno\fR variable to get more
+detailed diagnostics.
+.TP
+.B GDBM_FILE_WRITE_ERROR
+Writing to a disk file failed.  This can be set by
+\fBgdbm_open\fR, \fBgdbm_fd_open\fR, \fBgdbm_dump\fR and
+\fBgdbm_load\fR functions.
+.sp
+Inspect the value of the system \fBerrno\fR variable to get more
+detailed diagnostics.
+.TP
+.B GDBM_FILE_SEEK_ERROR
+Positioning in a disk file failed.  This can be set by
+\fBgdbm_open\fR function.
+.sp
+Inspect the value of the system \fBerrno\fR variable to get a more
+detailed diagnostics.
+.TP
+.B GDBM_FILE_READ_ERROR
+Reading from a disk file failed.  This can be set by
+\fBgdbm_open\fR, \fBgdbm_dump\fR and \fBgdbm_load\fR functions.
+.sp
+Inspect the value of the system \fBerrno\fR variable to get a more
+detailed diagnostics.
+.TP
+.B GDBM_BAD_MAGIC_NUMBER
+The file given as argument to \fBgdbm_open\fR function is not a valid
+\fBgdbm\fR file: it has a wrong magic number.
+.TP
+.B GDBM_EMPTY_DATABASE
+The file given as argument to \fBgdbm_open\fR function is not a valid
+\fBgdbm\fR file: it has zero length.  This error is returned unless
+the \fIflags\fR argument has \fBGDBM_NEWDB\fR bit set.
+.TP
+.B GDBM_CANT_BE_READER
+This error code is set by the \fBgdbm_open\fR function if it is not
+able to lock file when called in \fBGDBM_READER\fR mode.
+.TP
+.B GDBM_CANT_BE_WRITER
+This error code is set by the \fBgdbm_open\fR function if it is not
+able to lock file when called in writer mode.
+.TP
+.B GDBM_READER_CANT_DELETE
+Set by the \fBgdbm_delete\fR, if it attempted to operate on a database
+that is open in read-only mode.
+.TP
+.B GDBM_READER_CANT_STORE
+Set by the \fBgdbm_store\fR if it attempted to operate on a database
+that is open in read-only mode.
+.TP
+.B GDBM_READER_CANT_REORGANIZE
+Set by the \fBgdbm_reorganize\fR if it attempted to operate on a
+database that is open in read-only mode.
+.TP
+.B GDBM_ITEM_NOT_FOUND
+Requested item was not found.  This error is set by \fBgdbm_delete\fR
+and \fBgdbm_fetch\fR when the requested key value is not found in the
+database.
+.TP
+.B GDBM_REORGANIZE_FAILED
+The \fBgdbm_reorganize\fR function is not able to create a temporary
+database.
+.TP
+.B GDBM_CANNOT_REPLACE
+Cannot replace existing item.  This error is set by the
+\fBgdbm_store\fR if the requested key value is found in the 
+database and the \fIflag\fR parameter is not \fBGDBM_REPLACE\fR.
+.TP
+.B GDBM_MALFORMED_DATA
+Input data was malformed in some way.  When returned by
+\fBgdbm_load\fR, this means that the input file was not a valid
+\fBgdbm\fR dump file.  When returned by \fBgdbm_store\fR, this means
+that either \fIkey\fR or \fIcontent\fR parameter had its \fBdptr\fR
+field set to \fBNULL\fR. 
+.sp
+The \fBGDBM_ILLEGAL_DATA\fR is an alias for this error code,
+maintained for backward compatibility.
+.TP
+.B GDBM_OPT_ALREADY_SET
+Requested option can be set only once and was already set.  As of
+version 1.21, this error code is no longer used.  In prior
+versions it could have been returned by the \fBgdbm_setopt\fR
+function when setting the \fBGDBM_CACHESIZE\fR value.
+.TP
+.B GDBM_OPT_BADVAL
+The \fIoption\fR argument is not valid or the \fIvalue\fR argument
+points to an invalid value in a call to \fBgdbm_setopt\fR function.
+.sp
+\fBGDBM_OPT_ILLEGAL\fR is an alias for this error code, maintained
+for backward compatibility.  Modern applications should not use it.
+.TP
+.B GDBM_BYTE_SWAPPED
+The \fBgdbm_open\fR function attempts to open a database which is
+created on a machine with different byte ordering.
+.TP
+.B GDBM_BAD_FILE_OFFSET
+The \fBgdbm_open\fR function sets this error code if the file it tries
+to open has a wrong magic number.
+.TP
+.B GDBM_BAD_OPEN_FLAGS
+Set by the \fBgdbm_dump\fR function if supplied an invalid
+\fIflags\fR argument.
+.TP
+.B GDBM_FILE_STAT_ERROR
+Getting information about a disk file failed.  The system \fBerrno\fR
+will give more details about the error.
+.sp
+This error can be set by the following functions: \fBgdbm_open\fR,
+\fBgdbm_reorganize\fR.
+.TP
+.B GDBM_FILE_EOF
+End of file was encountered where more data was expected to be
+present.  This error can occur when fetching data from the database
+and usually means that the database is truncated or otherwise corrupted.
+.sp
+This error can be set by any GDBM function that does I/O.  Some of
+these functions are: \fBgdbm_delete\fR, \fBgdbm_exists\fR,
+\fBgdbm_fetch\fR, \fBgdbm_export\fR, \fBgdbm_import\fR,
+\fBgdbm_reorganize\fR, \fBgdbm_firstkey\fR, \fBgdbm_nextkey\fR,
+\fBgdbm_store\fR.
+.TP
+.B GDBM_NO_DBNAME
+Output database name is not specified.  This error code is set by
+\fBgdbm_load\fR if the first argument points to \fBNULL\fR and the
+input file does not specify the database name.
+.TP
+.B GDBM_ERR_FILE_OWNER
+This error code is set by \fBgdbm_load\fR if it is unable to restore
+the database file owner.  It is a mild error condition, meaning that
+the data have been restored successfully, only changing the target file
+owner failed.  Inspect the system \fBerrno\fR variable to get a more
+detailed diagnostics.
+.TP
+.B GDBM_ERR_FILE_MODE
+This error code is set by \fBgdbm_load\fR if it is unable to restore
+database file mode.  It is a mild error condition, meaning that the data
+have been restored successfully, only changing the target file owner
+failed.  Inspect the system \fBerrno\fR variable to get a more
+detailed diagnostics.
+.TP
+.B GDBM_NEED_RECOVERY
+Database is in inconsistent state and needs recovery.  Call
+\fBgdbm_recover\fR if you get this error.
+.TP
+.B GDBM_BACKUP_FAILED
+The GDBM engine is unable to create backup copy of the file.
+.TP
+.B GDBM_DIR_OVERFLOW
+Bucket directory would overflow the size limit during an attempt to split
+hash bucket.  This error can occur while storing a new key.
+.TP
+.B GDBM_BAD_BUCKET
+Invalid index bucket is encountered in the database.  Database
+recovery is needed.
+.TP
+.B GDBM_BAD_HEADER
+This error is set by \fBgdbm_open\fR and \fBgdbm_fd_open\fR, if the
+first block read from the database file does not contain a valid GDBM
+header.
+.TP
+.B GDBM_BAD_AVAIL
+The available space stack is invalid.  This error can be set by
+\fBgdbm_open\fR and \fBgdbm_fd_open\fR, if the extended database
+verification was requested (\fBGDBM_XVERIFY\fR).  It is also set
+by the \fBgdbm_avail_verify\fR function.
+.sp
+The database needs recovery.
+.TP
+.B GDBM_BAD_HASH_TABLE
+Hash table in a bucket is invalid.  This error can be set by the
+following functions: \fBgdbm_delete\fR, \fBgdbm_exists\fR,
+\fBgdbm_fetch\fR, \fBgdbm_firstkey\fR, \fBgdbm_nextkey\fR, and
+\fBgdbm_store\fR.
+.sp
+The database needs recovery.
+.TP
+.B GDBM_BAD_DIR_ENTRY
+Bad directory entry found in the bucket.  The database recovery is
+needed.
+.TP
+.B GDBM_FILE_CLOSE_ERROR
+The \fBgdbm_close\fR function was unable to close the database file
+descriptor.  The system \fBerrno\fR variable contains the
+corresponding error code.
+.TP
+.B GDBM_FILE_SYNC_ERROR
+Cached content couldn't be synchronized to disk.  Examine the
+\fBerrno\fR variable to get more info,
+.sp
+Database recovery is needed.
+.TP
+.B GDBM_FILE_TRUNCATE_ERROR
+File cannot be truncated.  Examine the \fBerrno\fR variable to get
+more info.
+.sp
+This error is set by \fBgdbm_open\fR and \fBgdbm_fd_open\fR when
+called with the \fBGDBM_NEWDB\fR flag.
+.TP
+.B GDBM_BUCKET_CACHE_CORRUPTED
+The bucket cache structure is corrupted.  Database recovery is needed.
+.TP
+.B GDBM_BAD_HASH_ENTRY
+This error is set during sequential access (@pxref{Sequential}), if
+the next hash table entry does not contain the expected key.  This
+means that the bucket is malformed or corrupted and the database needs
+recovery.
+.TP
+.B GDBM_ERR_SNAPSHOT_CLONE
+Set by the \fBgdbm_failure_atomic\fR function if it was unable to
+clone the database file into a snapshot.  Inspect the system
+\fBerrno\fR variable for the underlying cause of the error.  If
+\fBerrno\fR is \fBEINVAL\fR or \fBENOSYS\fR, crash tolerance
+settings will be removed from the database.
+.TP
+.B GDBM_ERR_REALPATH
+Set by the \fBgdbm_failure_atomic\fR function if the call to
+\fBrealpath\fR function failed.  \fBrealpath\fR is used to
+determine actual path names of the snapshot files.  Examine the system
+\fBerrno\fR variable for details.
+.TP
+.B GDBM_ERR_USAGE
+Function usage error.  That includes invalid argument values, and the
+like.
+.SH DBM COMPATIBILITY ROUTINES
+\fBGDBM\fR includes a compatibility library \fBlibgdbm_compat\fR, for
+use with programs that expect traditional UNIX \fBdbm\fR or
+\fBndbm\fR interfaces, such as, e.g. \fBSendmail\fR.  The library is
+optional and thus may be absent in some binary distributions.
+.PP
+As the detailed discussion of the compatibility API is beyond the scope
+of this document, below we provide only a short reference.  For
+details, see the \fBGDBM Manual\fR, chapter \fBCompatibility with
+standard dbm and ndbm\fR.
+.SS DBM compatibility routines
+In \fBdbm\fR compatibility mode only one file may be opened at a time.
+All users are assumed to be writers.  If the database file is read
+only, it will fail as a writer, but will be opened as a reader.  All
+returned pointers in datum structures point to data that the
+compatibility library \fBwill free\fR.  They should be
+treated as static pointers (as standard UNIX \fBdbm\fR does).
+.PP
+The following interfaces are provided:
+.PP
+.B #include <dbm.h>
+.sp
+.BI "int dbminit (const char *" name ");"
+.br
+.BI "int store (datum " key ", datum " content );
+.br
+.BI "datum fetch (datum " key );
+.br
+.BI "int delete (datum " key );
+.br
+.BI "datum firstkey (void);"
+.br
+.BI "datum nextkey (datum " key );
+.br
+.BI "int dbmclose (void);"
+.SS NDBM Compatibility routines:
+In this mode, multiple databases can be opened.  Each database is
+identified by a handle of type \fBDBM *\fR.  As in the original
+\fBNDBM\fR, all returned pointers in datum structures point to data
+that will be freed by the compatibility library.  They should be
+treated as static pointers.
+.PP
+The following interfaces are provided:
+.PP
+.B #include <ndbm.h>
+.sp
+.BI "DBM *dbm_open (const char *" name ", int " flags ", int " mode );
+.br
+.BI "void dbm_close (DBM *" file );
+.br
+.BI "datum dbm_fetch (DBM *" file ", datum " key );
+.br
+.BI "int dbm_store (DBM *" file ", datum " key ", datum " content ", int " flags );
+.br
+.BI "int dbm_delete (DBM *" file ", datum " key );
+.br
+.BI "datum dbm_firstkey (DBM *" file );
+.br
+.BI "datum dbm_nextkey (DBM *" file ", datum " key );
+.br
+.BI "int dbm_error (DBM *" file );
+.br
+.BI "int dbm_clearerr (DBM *" file );
+.br
+.BI "int dbm_pagfno (DBM *" file );
+.br
+.BI "int dbm_dirfno (DBM *" file );
+.br
+.BI "int dbm_rdonly (DBM *" file );
+.SH LINKING
+This library is accessed by specifying \fI\-lgdbm\fR as the last
+parameter to the compile line, e.g.:
+.sp
+.nf
+.in +5
+gcc \-o prog prog.c \-lgdbm
+.in
+.fi
+.PP
+If you wish to use the \fBdbm\fR or \fBndbm\fR compatibility routines,
+you must link in the \fIgdbm_compat\fR library as well.  For example:
+.sp
+.nf
+.in +5
+gcc \-o prog proc.c \-lgdbm \-lgdbm_compat
+.in
+.fi
+.\" .SH BUGS
+
+.SH "BUG REPORTS"
+Send bug reports to <bug\-gdbm@gnu.org>.
+.SH "SEE ALSO"
+.BR gdbm_dump (1),
+.BR gdbm_load (1),
+.BR gdbmtool (1).
+.SH AUTHORS
+by Philip A. Nelson, Jason Downs and Sergey Poznyakoff;
+crash tolerance by Terence Kelly.
+.SH COPYRIGHT
+Copyright \(co 1990 - 2021 Free Software Foundation, Inc.
+
+GDBM is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 1, or (at your option)
+any later version.
+
+GDBM is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with GDBM.  If not, see <http://gnu.org/licenses/gpl.html>
+.SH CONTACTS
+You may contact the original author by:
+.br
+   e-mail:  phil@cs.wwu.edu
+.br
+  us-mail:  Philip A. Nelson
+.br
+Computer Science Department
+.br
+Western Washington University
+.br
+Bellingham, WA 98226
+
+You may contact the current maintainers by:
+.br
+   e-mail:  downsj@downsj.com
+.br
+and
+   e-mail:  gray@gnu.org
+
+For questions and feedback regarding crash tolerance, you may contact
+Terence Kelly at:
+.br
+   e-mail:  tpkelly @ { acm.org, cs.princeton.edu, eecs.umich.edu }
+
+.\" Local variables:
+.\" eval: (add-hook 'write-file-hooks 'time-stamp)
+.\" time-stamp-start: ".TH GDBM 3 \""
+.\" time-stamp-format: "%:B %:d, %:y"
+.\" time-stamp-end: "\""
+.\" time-stamp-line-limit: 20
+.\" end:
