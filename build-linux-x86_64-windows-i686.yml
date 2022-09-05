@@ -4,7 +4,7 @@
 - hosts: 127.0.0.1
   connection: local
   vars:
-    toolchain_version: "9"
+    toolchain_version: "13"
     src_dir: "{{ playbook_dir }}/src"
     work_dir: "{{ playbook_dir }}/temp"
     unpack_dir: "{{ work_dir }}/unpack"
@@ -90,6 +90,10 @@
           - gcc-mingw-w64-i686
           - g++-mingw-w64-i686
           - binutils-mingw-w64-i686
+          - libssl-dev
+          - zlib1g-dev
+          - libffi-dev
+          - libreadline-dev
         state: latest
 
     - name: Clean old builds
@@ -170,7 +174,7 @@
 
     - name: Install python libs (x86_64-linux)
       shell:
-        cmd: "{{ work_dir }}/python/bin/python3 -m pip install protobuf=={{ protobuf_version }} pyserial==3.5 heatshrink2==0.11.0 Pillow==9.1.1 python3-protobuf==2.5.0 black==22.6.0"
+        cmd: "LD_LIBRARY_PATH={{ work_dir }}/python/lib PYTHONHOME={{ work_dir }}/python {{ work_dir }}/python/bin/python3 -m pip install protobuf=={{ protobuf_version }} pyserial==3.5 heatshrink2==0.11.0 Pillow==9.1.1 python3-protobuf==2.5.0 black==22.6.0"
 
     - name: Download toolchain sources
       get_url:
@@ -217,7 +221,7 @@
         export PATH="{{ work_dir }}/python/bin:$PATH"
         ./install-sources.sh
         ./build-prerequisites.sh
-        ./build-toolchain.sh
+        ./build-toolchain.sh --skip_steps=howto,manual
       args:
         chdir: "{{ work_dir }}/{{ src_dirname }}"
 
