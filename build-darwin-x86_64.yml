@@ -4,7 +4,7 @@
 - hosts: 127.0.0.1
   connection: local
   vars:
-    toolchain_version: "16"
+    toolchain_version: "17"
     src_dir: "{{ playbook_dir }}/src"
     work_dir: "{{ playbook_dir }}/temp"
     unpack_dir: "{{ work_dir }}/unpack"
@@ -148,8 +148,9 @@
         dest: "{{ work_dir }}/"
 
     - name: Install python libs (x86_64-darwin)
-      shell:
-        cmd: "{{ work_dir }}/python/bin/python3 -m pip install protobuf=={{ protobuf_version }} pyserial==3.5 heatshrink2==0.11.0 Pillow==9.1.1 python3-protobuf==2.5.0 black==22.6.0 ansi==0.3.6 SCons==4.2.0"
+      shell: |
+        {{ work_dir }}/python/bin/python3 -m pip install --upgrade pip
+        {{ work_dir }}/python/bin/python3 -m pip install protobuf=={{ protobuf_version }} pyserial==3.5 heatshrink2==0.11.0 Pillow==9.1.1 python3-protobuf==2.5.0 black==22.6.0 ansi==0.3.6 SCons==4.4.0 colorlog==6.7.0
 
     - name: Download toolchain sources
       get_url:
