@@ -10,4 +10,4 @@ PY_HOME="$(cd "$SCRIPT_PATH/../python" && pwd)";
 LIB_OPENSSL_PATH="$(cd "$SCRIPT_PATH/../openssl/lib" && pwd)"
 
 # run
-DYLD_LIBRARY_PATH="$LIB_OPENSSL_PATH" PYTHONUSERBASE="$PY_HOME" "$SCRIPT_PATH/arm-none-eabi-gdb-py-bin" "$@";
+DYLD_LIBRARY_PATH="$LIB_OPENSSL_PATH" PYTHONHOME="$PY_HOME" "$SCRIPT_PATH/arm-none-eabi-gdb-py-bin" "$@";
