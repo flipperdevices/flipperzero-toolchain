@@ -4,7 +4,7 @@
 - hosts: 127.0.0.1
   connection: local
   vars:
-    toolchain_version: "18"
+    toolchain_version: "19"
     src_dir: "{{ playbook_dir }}/src"
     work_dir: "{{ playbook_dir }}/temp"
     unpack_dir: "{{ work_dir }}/unpack"
@@ -171,7 +171,7 @@
     - name: Install python libs (x86_64-linux)
       shell: |
         LD_LIBRARY_PATH={{ work_dir }}/python/lib PYTHONUSERBASE={{ work_dir }}/python {{ work_dir }}/python/bin/python3 -m pip install --upgrade pip
-        LD_LIBRARY_PATH={{ work_dir }}/python/lib PYTHONUSERBASE={{ work_dir }}/python {{ work_dir }}/python/bin/python3 -m pip install protobuf==4.21.7 pyserial==3.5 heatshrink2==0.11.0 Pillow==9.1.1 python3-protobuf==2.5.0 black==22.6.0 ansi==0.3.6 SCons==4.4.0 colorlog==6.7.0
+        LD_LIBRARY_PATH={{ work_dir }}/python/lib PYTHONUSERBASE={{ work_dir }}/python {{ work_dir }}/python/bin/python3 -m pip install protobuf==4.21.7 pyserial==3.5 heatshrink2==0.11.0 Pillow==9.1.1 python3-protobuf==2.5.0 black==22.6.0 ansi==0.3.6 SCons==4.4.0 colorlog==6.7.0 packaging==21.3
 
     - name: Download toolchain sources
       get_url:
