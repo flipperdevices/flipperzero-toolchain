@@ -9,6 +9,7 @@ SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd -P)"
 PY_HOME="$(cd "$SCRIPT_PATH/.." && pwd)";
 LIB_PYTHON_PATH="$PY_HOME/lib";
 LIB_OPENSSL_PATH="$(cd "$SCRIPT_PATH/../../openssl/lib" && pwd)"
+LIB_GETTEXT_PATH="$(cd "$SCRIPT_PATH/../../gettext/lib" && pwd)"
 
 # run
-DYLD_LIBRARY_PATH="$LIB_OPENSSL_PATH" PYTHONUSERBASE="$PY_HOME" "$SCRIPT_PATH/python3.9-bin" "$@";
+DYLD_LIBRARY_PATH="$LIB_GETTEXT_PATH:$LIB_OPENSSL_PATH:$LIB_PYTHON_PATH" PYTHONHOME="$PY_HOME" "$SCRIPT_PATH/python3.11-bin" "$@";
