@@ -18,9 +18,9 @@ while [ $# -ge 1 ]; do
     OP="$1"
     case $OP in
         --libs|--ldflags)
-            echo "$("$PYTHON_PATH/bin/python3.9-config" "$OP" --embed) -L$PYTHON_PATH/lib";;
+            echo "$("$PYTHON_PATH/bin/python3.11-config" "$OP" --embed) -L$PYTHON_PATH/lib";;
         --*)
-            echo "$("$PYTHON_PATH/bin/python3.9-config" "$OP")";;
+            echo "$("$PYTHON_PATH/bin/python3.11-config" "$OP")";;
         *)
             ;;
     esac
