@@ -337,7 +337,8 @@
       # dirty hack, i'll fix it later
     - name: Fix interpreter in python/bin scripts (x86_64-linux)
       shell:
-        cmd: "sed -i 's/#!\/vdb\/flipperzero-toolchain\/temp\/python\/bin\/python3/#!\/usr\/bin\/env python3/g' *"
+        cmd: |
+          sed -i 's/#!\/vdb\/flipperzero-toolchain\/temp\/python\/bin\/python3/#!\/usr\/bin\/env python3/g' *
       args:
         chdir: "{{ unpack_dir }}/gcc-arm-none-eabi-10.3-x86_64-linux-flipper/python/bin"
 
