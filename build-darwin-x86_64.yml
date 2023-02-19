@@ -4,7 +4,7 @@
 - hosts: 127.0.0.1
   connection: local
   vars:
-    toolchain_version: "20"
+    toolchain_version: "21"
     src_dir: "{{ playbook_dir }}/src"
     work_dir: "{{ playbook_dir }}/temp"
     unpack_dir: "{{ work_dir }}/unpack"
@@ -177,6 +177,14 @@
         path: "{{ work_dir }}/{{ src_dirname }}/build-toolchain.sh"
         regexp: "--with-python=yes"
         replace: "--with-python={{ work_dir }}/{{ src_dirname }}/python-config.sh"
+
+    # https://unix.stackexchange.com/questions/624486/gdb-installed-from-homebrew-on-macos-big-sur-fails-to-load-symbols-from-elf32-i3
+    - name: 'Patch {{ src_dirname }}/src/gdb/bfd/elf-bfd.h (x86_64-darwin)'
+      lineinfile:
+        path: "{{ work_dir }}/{{ src_dirname }}/src/gdb/bfd/elf-bfd.h"
+        search_string: '#include <string.h>'
+        insertafter: '#define _LIBELF_H_ 1'
+        line: '#include <string.h>'
 
     # to compile gdb with custom Python, it need to be in PATH for compilation time
     - name: Build toolchain
