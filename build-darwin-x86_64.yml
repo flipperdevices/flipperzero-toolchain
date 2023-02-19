@@ -231,6 +231,12 @@
       shell:
         cmd: "mv {{ work_dir }}/{{ openocd_darwin_dirname }} {{ x86_64_darwin_toolchain_dir }}/openocd"
 
+    # Dirty hack. i'll fix it later
+    - name: Fix interpreter in python/bin scripts (x86_64-darwin)
+      shell:
+        cmd: "sed -i '' 's/#!\/Users\/build\/flipperzero-toolchain\/temp\/python\/bin\/python3/#!\/usr\/bin\/env python3/g' $(find . -type f -exec grep -Iq . {} \; -print)"
+
+
     - name: Backup original binnaries (x86_64-darwin)
       copy:
         src: "{{ x86_64_darwin_toolchain_dir }}/{{ item }}"
@@ -244,23 +250,6 @@
         dest: "{{ x86_64_darwin_toolchain_dir }}/{{ item }}"
         mode: 0755
       with_items: "{{ wrappers }}"
-
-    - name: Fix interpreter in python/bin scripts (x86_64-darwin)
-      replace:
-        path: "{{ x86_64_darwin_toolchain_dir }}/python/bin/{{ item }}"
-        regexp: "#!{{ work_dir }}/python/bin/python3.11"
-        replace: "#!/usr/bin/env python3"
-      loop:
-        - idle3.11
-        - 2to3-3.11
-        - pip3
-        - pip3.11
-        - pydoc3.11
-
-          #- name: Add pre-compiled GDBM (x86_64-darwin)
-          #copy:
-          #src: "{{ src_dir }}/darwin/gdbm"
-          #dest: "{{ x86_64_darwin_toolchain_dir }}/"
 
     - name: Rename toolchain directory (x86_64-darwin)
       shell:
