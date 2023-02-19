@@ -179,6 +179,13 @@
         regexp: "--with-python=yes"
         replace: "--with-python={{ work_dir }}/{{ src_dirname }}/python-config.sh"
 
+    - name: Unpack toolchain modules sources
+      shell: |
+        export SYSTEM_VERSION_COMPAT=1
+        ./install-sources.sh
+      args:
+        chdir: "{{ work_dir }}/{{ src_dirname }}"
+
     # https://unix.stackexchange.com/questions/624486/gdb-installed-from-homebrew-on-macos-big-sur-fails-to-load-symbols-from-elf32-i3
     - name: 'Patch {{ src_dirname }}/src/gdb/bfd/elf-bfd.h (x86_64-darwin)'
       lineinfile:
@@ -192,7 +199,6 @@
       shell: |
         export PATH="{{ work_dir }}/python/bin:$PATH"
         export SYSTEM_VERSION_COMPAT=1
-        ./install-sources.sh
         ./build-prerequisites.sh
         ./build-toolchain.sh --skip_steps=howto,manual
       args:
