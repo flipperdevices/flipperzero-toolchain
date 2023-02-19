@@ -8,8 +8,9 @@ set -eu;
 SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd -P)"
 PY_HOME="$(cd "$SCRIPT_PATH/.." && pwd)";
 LIB_PYTHON_PATH="$PY_HOME/lib";
+PYTHON_CA_CERT_PATH="$LIB_PYTHON_PATH/python3.11/site-packages/certifi";
 LIB_OPENSSL_PATH="$(cd "$SCRIPT_PATH/../../openssl/lib" && pwd)"
 LIB_GETTEXT_PATH="$(cd "$SCRIPT_PATH/../../gettext/lib" && pwd)"
 
 # run
-DYLD_LIBRARY_PATH="$LIB_GETTEXT_PATH:$LIB_OPENSSL_PATH:$LIB_PYTHON_PATH" PYTHONHOME="$PY_HOME" "$SCRIPT_PATH/python3.11-bin" "$@";
+SSL_CERT_FILE="$PYTHON_CA_CERT_PATH/cacert.pem" DYLD_LIBRARY_PATH="$LIB_GETTEXT_PATH:$LIB_OPENSSL_PATH:$LIB_PYTHON_PATH" PYTHONHOME="$PY_HOME" "$SCRIPT_PATH/python3.11-bin" "$@";

@@ -1,0 +1,13 @@
+#!/bin/sh
+# shellcheck disable=SC2048,SC2086
+
+# unofficial strict mode
+set -eu;
+
+# vars
+SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd -P)"
+LIB_OPENSSL_PATH="$(cd "$SCRIPT_PATH/../lib" && pwd)"
+PYTHON_CA_CERT_PATH="$(cd "$SCRIPT_PATH/../../python/lib/python3.11/site-packages/certifi" && pwd)";
+
+# run
+SSL_CERT_FILE="$PYTHON_CA_CERT_PATH/cacert.pem" DYLD_LIBRARY_PATH="$LIB_OPENSSL_PATH" "$SCRIPT_PATH/openssl-bin" "$@";

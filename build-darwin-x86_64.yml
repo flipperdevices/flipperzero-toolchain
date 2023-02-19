@@ -64,6 +64,7 @@
       - "lib/gcc/arm-none-eabi/10.3.1/cc1plus"
       - "lib/gcc/arm-none-eabi/10.3.1/lto1"
       - "python/bin/python3.11"
+      - "openssl/bin/openssl"
 
   tasks:
     - name: Install build dependences
