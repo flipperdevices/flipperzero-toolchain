@@ -8,7 +8,8 @@ SCRIPT_PATH="$(dirname -- "$(readlink -f -- "$0")")";
 PY_HOME="$(cd "$SCRIPT_PATH/../python" && pwd)";
 LIB_PYTHON_PATH="$PY_HOME/lib";
 LIB_CURSES_PATH="$(cd "$SCRIPT_PATH/../ncurses/lib" && pwd)";
+LIB_OPENSSL_PATH="$(cd "$SCRIPT_PATH/../openssl/lib" && pwd)"
 LIB_FFI_PATH="$(cd "$SCRIPT_PATH/../libffi/lib" && pwd)"
 
 # run original gdb-py with local python and our ncurses lib
-LD_LIBRARY_PATH="$LIB_FFI_PATH:$LIB_PYTHON_PATH:$LIB_CURSES_PATH" PYTHONHOME="$PY_HOME" "$SCRIPT_PATH/arm-none-eabi-gdb-py-bin" "$@";
+LD_LIBRARY_PATH="$LIB_OPENSSL_PATH:$LIB_FFI_PATH:$LIB_PYTHON_PATH:$LIB_CURSES_PATH" PYTHONHOME="$PY_HOME" "$SCRIPT_PATH/arm-none-eabi-gdb-py-bin" "$@";

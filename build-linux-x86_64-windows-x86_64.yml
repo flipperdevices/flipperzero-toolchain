@@ -4,18 +4,19 @@
 - hosts: 127.0.0.1
   connection: local
   vars:
-    toolchain_version: "19"
+    toolchain_version: "21"
     src_dir: "{{ playbook_dir }}/src"
     work_dir: "{{ playbook_dir }}/temp"
     unpack_dir: "{{ work_dir }}/unpack"
     out_dir: "{{ playbook_dir }}/build"
     src_link: "https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10-src.tar.bz2"
     libffi_link: "https://github.com/libffi/libffi/archive/refs/tags/v3.3.tar.gz"
-    python_link: "https://www.python.org/ftp/python/3.9.9/Python-3.9.9.tgz"
+    python_link: "https://www.python.org/ftp/python/3.11.2/Python-3.11.2.tgz"
     ncurses_link: "https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.2.tar.gz"
     protobuf_link: "https://github.com/protocolbuffers/protobuf/releases/download/v21.7/protobuf-cpp-3.21.7.tar.gz"
     libtool_link: "https://ftpmirror.gnu.org/libtool/libtool-2.4.6.tar.gz"
     libedit_link: "https://www.thrysoee.dk/editline/libedit-20210910-3.1.tar.gz"
+    openssl_link: "https://www.openssl.org/source/openssl-1.1.1t.tar.gz"
     src_filename: "{{ src_link | basename }}"
     src_dirname: "{{ src_filename.split('-src') | first }}"
     libedit_filename: "{{ libedit_link | basename }}"
@@ -26,7 +27,7 @@
     libffi_configure_args: "--disable-docs"
     python_filename: "{{ python_link | basename }}"
     python_dirname: "{{ python_filename.split('.tgz') | first }}"
-    python_configure_args: "--enable-shared"
+    python_configure_args: "--enable-shared --with-openssl={{ work_dir }}/openssl"
     ncurses_filename: "{{ ncurses_link | basename }}"
     ncurses_dirname: "{{ ncurses_filename.split('.tar.gz') | first }}"
     ncurses_configure_args: "--with-shared --enable-widec --with-versioned-syms"
@@ -37,6 +38,9 @@
     libtool_filename: "{{ libtool_link | basename }}"
     libtool_dirname: "{{ libtool_filename.split('.tar.gz') | first }}"
     libtool_configure_args: ""
+    openssl_filename: "{{ openssl_link | basename }}"
+    openssl_dirname: "{{ openssl_filename.split('.tar.gz') | first }}"
+    openssl_configure_args: "linux-x86_64"
     openocd_linux_filename: "xpack-openocd-0.11.0-3-linux-x64.tar.gz"
     openocd_linux_dirname: "{{ openocd_linux_filename.split('-linux-x64.tar.gz') | first }}"
     openocd_win64_filename: "xpack-openocd-0.11.0-5-win32-x64.zip"
@@ -45,13 +49,14 @@
       - "libffi"
       - "ncurses"
       - "libtool"
+      - "openssl"
       - "python"
       - "protobuf"
     wrappers:
       - "bin/arm-none-eabi-gdb-py"
       - "bin/arm-none-eabi-gdb"
       - "protobuf/bin/protoc"
-      - "python/bin/python3.9"
+      - "python/bin/python3.11"
 
   tasks:
     - name: Install build dependences
@@ -128,12 +133,19 @@
         export LD_LIBRARY_PATH="{{ work_dir }}/libffi/lib:$LD_LIBRARY_PATH"
         export LD_LIBRARY_PATH="{{ work_dir }}/ncurses/lib:$LD_LIBRARY_PATH"
         export LD_LIBRARY_PATH="{{ work_dir }}/libtool/lib:$LD_LIBRARY_PATH"
+        export LD_LIBRARY_PATH="{{ work_dir }}/openssl/lib:$LD_LIBRARY_PATH"
         if [ "{{ item }}" = "libffi" ]; then
           ./autogen.sh
         fi
-        ./configure "--prefix={{ work_dir }}/{{ item }}" {{ lookup('vars', item ~ '_configure_args') }}
-        make "-j{{ ansible_processor_vcpus }}"
-        make install
+        if [ "{{ item }}" = "openssl" ]; then
+          ./Configure "--prefix={{ work_dir }}/{{ item }}" {{ lookup('vars', item ~ '_configure_args') }}
+          make
+          make install_sw
+        else
+          ./configure "--prefix={{ work_dir }}/{{ item }}" {{ lookup('vars', item ~ '_configure_args') }}
+          make "-j{{ ansible_processor_vcpus }}"
+          make install
+        fi
       args:
         chdir: "{{ unpack_dir }}/{{ lookup('vars', item ~ '_dirname') }}"
       with_items: "{{ tools_to_add }}"
@@ -170,8 +182,8 @@
 
     - name: Install python libs (x86_64-linux)
       shell: |
-        LD_LIBRARY_PATH={{ work_dir }}/python/lib PYTHONUSERBASE={{ work_dir }}/python {{ work_dir }}/python/bin/python3 -m pip install --upgrade pip
-        LD_LIBRARY_PATH={{ work_dir }}/python/lib PYTHONUSERBASE={{ work_dir }}/python {{ work_dir }}/python/bin/python3 -m pip install protobuf==4.21.7 pyserial==3.5 heatshrink2==0.11.0 Pillow==9.1.1 python3-protobuf==2.5.0 black==22.6.0 ansi==0.3.6 SCons==4.4.0 colorlog==6.7.0 packaging==21.3
+        LD_LIBRARY_PATH={{ work_dir }}/openssl/lib:{{ work_dir }}/python/lib PYTHONUSERBASE={{ work_dir }}/python {{ work_dir }}/python/bin/python3 -m pip install --upgrade pip
+        LD_LIBRARY_PATH={{ work_dir }}/openssl/lib:{{ work_dir }}/python/lib PYTHONUSERBASE={{ work_dir }}/python {{ work_dir }}/python/bin/python3 -m pip install ansi==0.3.6 bitstring==3.1.9 black==23.1.0 certifi==2022.12.7 cffi==1.15.1 charset-normalizer==3.0.1 click==8.1.3 colorlog==6.7.0 contextlib2==21.6.0 cryptography==39.0.1 dataclass-wizard==0.22.2 ecdsa==0.18.0 esptool==4.4 gitdb==4.0.10 GitPython==3.1.29 heatshrink2==0.12.0 idna==3.4 lxml==4.9.2 mypy-extensions==1.0.0 packaging==23.0 pathspec==0.11.0 Pillow==9.4.0 platformdirs==3.0.0 protobuf==4.21.12 pycparser==2.21 pyserial==3.5 python3-protobuf==2.5.0 PyYAML==6.0 reedsolo==1.5.4 requests==2.28.2 schema==0.7.5 SCons==4.4.0 six==1.16.0 smmap==5.0.0 urllib3==1.26.14
 
     - name: Download toolchain sources
       get_url:
@@ -309,18 +321,6 @@
         mode: 0755
       with_items: "{{ wrappers }}"
 
-    - name: Fix interpreter in python/bin scripts (x86_64-linux)
-      replace:
-        path: "{{ x86_64_linux_toolchain_dir }}/python/bin/{{ item }}"
-        regexp: "#!{{ work_dir }}/python/bin/python3.9"
-        replace: "#!/usr/bin/env python3"
-      loop:
-        - idle3.9
-        - 2to3-3.9
-        - pip3
-        - pip3.9
-        - pydoc3.9
-
     - name: Add wrappers (x86_64-windows)
       copy:
         src: "{{ src_dir }}/win64/wrappers/arm-none-eabi-gdb-py-wrapper.bat"
@@ -333,6 +333,13 @@
     - name: Rename toolchain directory (x86_64-windows)
       shell:
         cmd: "mv {{ x86_64_windows_toolchain_dir }} {{ unpack_dir }}/win64/gcc-arm-none-eabi-10.3-x86_64-windows-flipper"
+
+      # dirty hack, i'll fix it later
+    - name: Fix interpreter in python/bin scripts (x86_64-linux)
+      shell:
+        cmd: "sed -i 's/#!\/vdb\/flipperzero-toolchain\/temp\/python\/bin\/python3/#!\/usr\/bin\/env python3/g' *"
+      args:
+        chdir: "{{ unpack_dir }}/gcc-arm-none-eabi-10.3-x86_64-linux-flipper/python/bin"
 
     - name: Add clang-format to toolchain (x86_64-linux)
       copy:
