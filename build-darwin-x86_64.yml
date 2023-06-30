@@ -4,7 +4,7 @@
 - hosts: 127.0.0.1
   connection: local
   vars:
-    toolchain_version: "21"
+    toolchain_version: "22"
     src_dir: "{{ playbook_dir }}/src"
     work_dir: "{{ playbook_dir }}/temp"
     unpack_dir: "{{ work_dir }}/unpack"
@@ -155,7 +155,7 @@
     - name: Install python libs (x86_64-darwin)
       shell: |
         {{ work_dir }}/python/bin/python3 -m pip install --upgrade pip
-        {{ work_dir }}/python/bin/python3 -m pip install ansi==0.3.6 bitstring==3.1.9 black==23.1.0 certifi==2022.12.7 cffi==1.15.1 charset-normalizer==3.0.1 click==8.1.3 colorlog==6.7.0 contextlib2==21.6.0 cryptography==39.0.1 dataclass-wizard==0.22.2 ecdsa==0.18.0 esptool==4.4 gitdb==4.0.10 GitPython==3.1.29 heatshrink2==0.12.0 idna==3.4 lxml==4.9.2 mypy-extensions==1.0.0 packaging==23.0 pathspec==0.11.0 Pillow==9.4.0 platformdirs==3.0.0 protobuf==4.21.12 pycparser==2.21 pyserial==3.5 python3-protobuf==2.5.0 PyYAML==6.0 reedsolo==1.5.4 requests==2.28.2 schema==0.7.5 SCons==4.4.0 six==1.16.0 smmap==5.0.0 urllib3==1.26.14
+        {{ work_dir }}/python/bin/python3 -m pip install ansi==0.3.6 bitstring==3.1.9 black==23.1.0 certifi==2022.12.7 cffi==1.15.1 charset-normalizer==3.0.1 click==8.1.3 colorlog==6.7.0 contextlib2==21.6.0 cryptography==39.0.1 dataclass-wizard==0.22.2 ecdsa==0.18.0 esptool==4.4 gitdb==4.0.10 GitPython==3.1.29 heatshrink2==0.12.0 idna==3.4 lxml==4.9.2 mypy-extensions==1.0.0 packaging==23.0 pathspec==0.11.0 Pillow==9.4.0 platformdirs==3.0.0 protobuf==4.21.12 pycparser==2.21 pyserial==3.5 python3-protobuf==2.5.0 PyYAML==6.0 reedsolo==1.5.4 requests==2.28.2 schema==0.7.5 SCons==4.5.2 pyelftools==0.29 six==1.16.0 smmap==5.0.0 urllib3==1.26.14
 
     - name: Download toolchain sources
       get_url:
@@ -286,6 +286,7 @@
         path: "{{ unpack_dir }}/gcc-arm-none-eabi-10.3-x86_64-darwin-flipper"
         dest: "{{ out_dir }}/gcc-arm-none-eabi-10.3-x86_64-darwin-flipper-{{ toolchain_version }}.tar.gz"
 
-    - name: Upload toolchain to server
-      shell:
-        cmd: "rsync -Pav -e \"ssh -p 41337 -i {{ ansible_env.HOME }}/.ssh/server.flipperdevices.com.sec\" {{ out_dir }}/ data@server.flipperdevices.com:/home/data/toolchain/"
+          #- name: Upload toolchain to server
+          #shell:
+          #cmd: "rsync -Pav -e \"ssh -p 41337 -i {{ ansible_env.HOME }}/.ssh/server.flipperdevices.com.sec\" {{ out_dir }}/ data@server.flipperdevices.com:/home/data/toolchain/"
+    # TODO: upload to new indexer
