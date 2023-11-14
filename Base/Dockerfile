@@ -39,9 +39,12 @@ FROM flipperzero-toolchain-build-deps AS flipperzero-toolchain-gcc
 RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install gcc-arm-none-eabi
 COPY --from=flipperzero-toolchain-python /toolchain/linux-output-root /toolchain/linux-output-root
 COPY --from=flipperzero-toolchain-newlib-nano /toolchain/linux-output-root /toolchain/linux-output-root
+COPY --from=flipperzero-toolchain-newlib-nano /toolchain/newlib-nano-temp /toolchain/newlib-nano-temp
 ADD scripts/relink.sh /usr/bin/
 ADD scripts/build-linux-gcc.sh /toolchain/src/
 RUN bash /toolchain/src/build-linux-gcc.sh
+ADD scripts/move_newlib_to_nano.sh /toolchain
+RUN bash /toolchain/move_newlib_to_nano.sh
 
 FROM flipperzero-toolchain-build-deps AS flipperzero-toolchain-tools
 ADD https://github.com/protocolbuffers/protobuf/releases/download/v21.7/protobuf-cpp-3.21.7.tar.gz /toolchain/src/src/archives/
@@ -59,7 +62,6 @@ COPY --from=flipperzero-toolchain-gcc /toolchain/linux-output-root /toolchain/li
 COPY --from=flipperzero-toolchain-tools /toolchain/linux-output-root /toolchain/linux-output-root
 RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install build-essential
 ADD requirements.txt /toolchain/requirements.txt
-ADD scripts/move_newlib_to_nano.sh /toolchain
+ADD scripts/relink.sh /usr/bin/
 RUN /toolchain/linux-output-root/bin/python3 -m pip install --upgrade pip
 RUN /toolchain/linux-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt
-#RUN bash /toolchain/move_newlib_to_nano.sh
