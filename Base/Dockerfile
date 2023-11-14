@@ -44,24 +44,24 @@ ADD scripts/relink.sh /usr/bin/
 ADD scripts/build-linux-gcc.sh /toolchain/src/
 RUN bash /toolchain/src/build-linux-gcc.sh
 ADD scripts/move_newlib_to_nano.sh /toolchain
-RUN bash /toolchain/move_newlib_to_nano.sh
+#RUN bash /toolchain/move_newlib_to_nano.sh
 
-FROM flipperzero-toolchain-build-deps AS flipperzero-toolchain-tools
-ADD https://github.com/protocolbuffers/protobuf/releases/download/v21.7/protobuf-cpp-3.21.7.tar.gz /toolchain/src/src/archives/
-RUN tar -xvf /toolchain/src/src/archives/protobuf-cpp-3.21.7.tar.gz -C /toolchain/src/src/
-RUN mv /toolchain/src/src/protobuf-3.21.7 /toolchain/src/src/protobuf
-ADD scripts/relink.sh /usr/bin/
-ADD scripts/build-linux-flipper-tools.sh /toolchain/src/
-RUN bash /toolchain/src/build-linux-flipper-tools.sh
+#FROM flipperzero-toolchain-build-deps AS flipperzero-toolchain-tools
+#ADD https://github.com/protocolbuffers/protobuf/releases/download/v21.7/protobuf-cpp-3.21.7.tar.gz /toolchain/src/src/archives/
+#RUN tar -xvf /toolchain/src/src/archives/protobuf-cpp-3.21.7.tar.gz -C /toolchain/src/src/
+#RUN mv /toolchain/src/src/protobuf-3.21.7 /toolchain/src/src/protobuf
+#ADD scripts/relink.sh /usr/bin/
+#ADD scripts/build-linux-flipper-tools.sh /toolchain/src/
+#RUN bash /toolchain/src/build-linux-flipper-tools.sh
 
-FROM debian:11 as flipperzero-toolchain
-COPY --from=flipperzero-toolchain-binutils /toolchain/linux-output-root /toolchain/linux-output-root
-COPY --from=flipperzero-toolchain-gdb /toolchain/linux-output-root /toolchain/linux-output-root
-COPY --from=flipperzero-toolchain-gdb-py /toolchain/linux-output-root /toolchain/linux-output-root
-COPY --from=flipperzero-toolchain-gcc /toolchain/linux-output-root /toolchain/linux-output-root
-COPY --from=flipperzero-toolchain-tools /toolchain/linux-output-root /toolchain/linux-output-root
-RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install build-essential
-ADD requirements.txt /toolchain/requirements.txt
-ADD scripts/relink.sh /usr/bin/
-RUN /toolchain/linux-output-root/bin/python3 -m pip install --upgrade pip
-RUN /toolchain/linux-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt
+#FROM debian:11 as flipperzero-toolchain
+#COPY --from=flipperzero-toolchain-binutils /toolchain/linux-output-root /toolchain/linux-output-root
+#COPY --from=flipperzero-toolchain-gdb /toolchain/linux-output-root /toolchain/linux-output-root
+#COPY --from=flipperzero-toolchain-gdb-py /toolchain/linux-output-root /toolchain/linux-output-root
+#COPY --from=flipperzero-toolchain-gcc /toolchain/linux-output-root /toolchain/linux-output-root
+#COPY --from=flipperzero-toolchain-tools /toolchain/linux-output-root /toolchain/linux-output-root
+#RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install build-essential
+#ADD requirements.txt /toolchain/requirements.txt
+#ADD scripts/relink.sh /usr/bin/
+#RUN /toolchain/linux-output-root/bin/python3 -m pip install --upgrade pip
+#RUN /toolchain/linux-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt
