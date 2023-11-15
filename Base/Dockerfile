@@ -31,12 +31,18 @@ ADD scripts/build-linux-gdb-py.sh /toolchain/src/
 RUN bash /toolchain/src/build-linux-gdb-py.sh
 
 FROM flipperzero-toolchain-build-deps AS flipperzero-toolchain-newlib-nano
-RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install gcc-arm-none-eabi
+ADD https://developer.arm.com/-/media/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz /toolchain/src/src/archives
+RUN tar -xvf /toolchain/src/src/archives/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz -C /toolchain/src/src/
+RUN rm -rf /usr/share/doc/gcc
+RUN cp -fr /toolchain/src/src/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/* /usr/
 ADD scripts/build-linux-newlib.sh /toolchain/src/
 RUN bash /toolchain/src/build-linux-newlib.sh
 
 FROM flipperzero-toolchain-build-deps AS flipperzero-toolchain-gcc
-RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install gcc-arm-none-eabi
+ADD https://developer.arm.com/-/media/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz /toolchain/src/src/archives
+RUN tar -xvf /toolchain/src/src/archives/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz -C /toolchain/src/src/
+RUN rm -rf /usr/share/doc/gcc
+RUN cp -rf /toolchain/src/src/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/* /usr/
 COPY --from=flipperzero-toolchain-python /toolchain/linux-output-root /toolchain/linux-output-root
 COPY --from=flipperzero-toolchain-newlib-nano /toolchain/linux-output-root /toolchain/linux-output-root
 COPY --from=flipperzero-toolchain-newlib-nano /toolchain/newlib-nano-temp /toolchain/newlib-nano-temp
@@ -44,24 +50,30 @@ ADD scripts/relink.sh /usr/bin/
 ADD scripts/build-linux-gcc.sh /toolchain/src/
 RUN bash /toolchain/src/build-linux-gcc.sh
 ADD scripts/move_newlib_to_nano.sh /toolchain
-#RUN bash /toolchain/move_newlib_to_nano.sh
+RUN bash /toolchain/move_newlib_to_nano.sh
 
-#FROM flipperzero-toolchain-build-deps AS flipperzero-toolchain-tools
-#ADD https://github.com/protocolbuffers/protobuf/releases/download/v21.7/protobuf-cpp-3.21.7.tar.gz /toolchain/src/src/archives/
-#RUN tar -xvf /toolchain/src/src/archives/protobuf-cpp-3.21.7.tar.gz -C /toolchain/src/src/
-#RUN mv /toolchain/src/src/protobuf-3.21.7 /toolchain/src/src/protobuf
-#ADD scripts/relink.sh /usr/bin/
-#ADD scripts/build-linux-flipper-tools.sh /toolchain/src/
-#RUN bash /toolchain/src/build-linux-flipper-tools.sh
+FROM flipperzero-toolchain-build-deps AS flipperzero-toolchain-tools
+ADD https://github.com/protocolbuffers/protobuf/releases/download/v21.7/protobuf-cpp-3.21.7.tar.gz /toolchain/src/src/archives/
+ADD https://github.com/xpack-dev-tools/openocd-xpack/releases/download/v0.12.0-2/xpack-openocd-0.12.0-2-linux-x64.tar.gz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/protobuf-cpp-3.21.7.tar.gz -C /toolchain/src/src/
+RUN tar -xvf /toolchain/src/src/archives/xpack-openocd-0.12.0-2-linux-x64.tar.gz -C /toolchain/src/src/
+RUN mv /toolchain/src/src/protobuf-3.21.7 /toolchain/src/src/protobuf
+ADD scripts/relink.sh /usr/bin/
+ADD scripts/build-linux-flipper-tools.sh /toolchain/src/
+RUN bash /toolchain/src/build-linux-flipper-tools.sh
+RUN cp -r /toolchain/src/src/xpack-openocd-0.12.0-2/*  /toolchain/linux-output-root/
 
-#FROM debian:11 as flipperzero-toolchain
-#COPY --from=flipperzero-toolchain-binutils /toolchain/linux-output-root /toolchain/linux-output-root
-#COPY --from=flipperzero-toolchain-gdb /toolchain/linux-output-root /toolchain/linux-output-root
-#COPY --from=flipperzero-toolchain-gdb-py /toolchain/linux-output-root /toolchain/linux-output-root
-#COPY --from=flipperzero-toolchain-gcc /toolchain/linux-output-root /toolchain/linux-output-root
-#COPY --from=flipperzero-toolchain-tools /toolchain/linux-output-root /toolchain/linux-output-root
-#RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install build-essential
-#ADD requirements.txt /toolchain/requirements.txt
-#ADD scripts/relink.sh /usr/bin/
-#RUN /toolchain/linux-output-root/bin/python3 -m pip install --upgrade pip
-#RUN /toolchain/linux-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt
+FROM debian:11 as flipperzero-toolchain
+COPY --from=flipperzero-toolchain-binutils /toolchain/linux-output-root /toolchain/linux-output-root
+COPY --from=flipperzero-toolchain-gdb /toolchain/linux-output-root /toolchain/linux-output-root
+COPY --from=flipperzero-toolchain-gdb-py /toolchain/linux-output-root /toolchain/linux-output-root
+COPY --from=flipperzero-toolchain-gcc /toolchain/linux-output-root /toolchain/linux-output-root
+COPY --from=flipperzero-toolchain-tools /toolchain/linux-output-root /toolchain/linux-output-root
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install build-essential file patchelf
+ADD requirements.txt /toolchain/requirements.txt
+ADD scripts/relink.sh /usr/bin/
+ADD scripts/strip.sh /usr/bin/
+RUN /toolchain/linux-output-root/bin/python3 -m pip install --upgrade pip
+RUN /toolchain/linux-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt
+RUN relink.sh /toolchain/linux-output-root
+RUN strip.sh /toolchain/linux-output-root
