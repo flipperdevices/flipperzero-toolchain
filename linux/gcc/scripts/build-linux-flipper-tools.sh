@@ -15,9 +15,7 @@ function cleanup_relink() {
         -name "*.a" \
         -delete;
     rm -rf "$DIRECTORY/share/man"
-    mv "$DIRECTORY" "${DIRECTORY}_bak";
-    relink.sh "${DIRECTORY}_bak";
-    mv "${DIRECTORY}_bak" "$DIRECTORY";
+    relink.sh "$DIRECTORY";
 }
 
 function build_protobuf() {

@@ -9,6 +9,12 @@ if [[ -z "$DIRECTORY" ]]; then
     exit 1;
 fi
 
+mv "$DIRECTORY" "${DIRECTORY}_bak";
+function restore_at_exit() {
+	mv "${DIRECTORY}_bak" "$DIRECTORY";
+}
+trap restore_at_exit EXIT;
+
 function check_library() {
     local LIB;
     local SEPARATOR;
@@ -74,7 +80,7 @@ function relink_object() {
     local LIB_REL_PATH;
     OBJECT="$1";
     LIB="$2";
-    LIB_FIND_PATH="$DIRECTORY";
+    LIB_FIND_PATH="${DIRECTORY}_bak";
     echo -e "\tPATCHELF\t$OBJECT\t$LIB";
     LIB_PATH=$(find -L "$LIB_FIND_PATH" -type f ! -size 0 -name "$LIB" | head -n 1);
     if [[ ! -f "$LIB_PATH" ]]; then
@@ -86,10 +92,10 @@ function relink_object() {
     patchelf --set-rpath "\$ORIGIN/$LIB_REL_PATH" "$OBJECT";
     patchelf --add-needed "$LIB" "$OBJECT";
 }
-
-OBJECTS=( $(find "$DIRECTORY" -type f ! -size 0 -exec file {} \; | grep ELF | awk -F ': ELF' '{print $1}') );
+OBJECTS=( $(find "${DIRECTORY}_bak" -type f ! -size 0 ! -name "*.a" -and ! -name "*.o" -exec file {} \; | grep ELF | awk -F ': ELF' '{print $1}') );
 for CUR in "${OBJECTS[@]}"; do
     if ! check_object "$CUR"; then
         relink_object "$CUR";
     fi
 done
+

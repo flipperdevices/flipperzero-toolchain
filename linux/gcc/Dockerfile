@@ -71,9 +71,11 @@ COPY --from=flipperzero-toolchain-gcc /toolchain/linux-output-root /toolchain/li
 COPY --from=flipperzero-toolchain-tools /toolchain/linux-output-root /toolchain/linux-output-root
 RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install build-essential file patchelf
 ADD requirements.txt /toolchain/requirements.txt
-ADD scripts/relink.sh /usr/bin/
-ADD scripts/strip.sh /usr/bin/
 RUN /toolchain/linux-output-root/bin/python3 -m pip install --upgrade pip
 RUN /toolchain/linux-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt
+ADD scripts/relink.sh /usr/bin/
 RUN relink.sh /toolchain/linux-output-root
+ADD scripts/strip.sh /usr/bin/
 RUN strip.sh /toolchain/linux-output-root
+ADD scripts/bundle_upload.sh /usr/bin/
+WORKDIR /toolchain
