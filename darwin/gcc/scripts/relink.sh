@@ -22,11 +22,9 @@ function check_library() {
     if grep -qE "^@" <<< "$LIB_CURRENT_FULL_PATH"; then
         return 0;
     fi
-    if grep -qE "^/usr/lib|^/System" <<< "$LIB_CURRENT_FULL_PATH"; then
-        # Force relink
-        if ! grep -qE "openssl|python" <<< "$LIB_CURRENT_FULL_PATH"; then
-            return 0;
-        fi
+    # bazel-out - is a prefix to protobuf shared libaries id, id name isn't match lib name, there is no way to catch it
+    if grep -qE "^/usr/lib|^/System|^bazel-out" <<< "$LIB_CURRENT_FULL_PATH"; then
+        return 0;
     fi
     return 1;
 }
@@ -74,7 +72,7 @@ function relink_object() {
     fi
 }
 
-OBJECTS=( $(find "$DIRECTORY" -type f ! -size 0 ! -name "*.a" -and ! -name "*.o" -exec file {} \; | grep Mach-O | awk -F ': Mach-O' '{print $1}') );
+OBJECTS=( $(find "$DIRECTORY" -type f ! -size 0 ! -name "*.a" -and ! -name "*.o" -exec file {} \; | grep Mach-O | awk -F ': Mach-O' '{print $1}' | awk '{print $1}' | sort -u) );
 for CUR in "${OBJECTS[@]}"; do
     if ! check_object "$CUR"; then
         relink_object "$CUR";
