@@ -5,10 +5,6 @@ RUN tar -xvf /toolchain/src/src/archives/arm-gnu-toolchain-src-snapshot-12.3.rel
 WORKDIR /toolchain/src/
 
 FROM flipperzero-toolchain-src AS flipperzero-toolchain-windows-build-deps
-ADD https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.2.tar.gz /toolchain/src/src/archives/
-RUN tar -xvf /toolchain/src/src/archives/ncurses-6.2.tar.gz -C /toolchain/src/src/
-RUN rm -rf /toolchain/src/src/ncurses
-RUN mv /toolchain/src/src/ncurses-6.2 /toolchain/src/src/ncurses
 ADD scripts/build-windows-gcc-build-libs.sh /toolchain/src/
 RUN bash /toolchain/src/build-windows-gcc-build-libs.sh
 
@@ -26,4 +22,16 @@ RUN tar -xvf /toolchain/src/src/archives/arm-gnu-toolchain-12.2.rel1-x86_64-arm-
 RUN rm -rf /usr/share/doc/gcc
 RUN cp -rf /toolchain/src/src/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/* /usr/
 ADD scripts/build-windows-gcc.sh /toolchain/src/
-#RUN bash /toolchain/src/build-windows-gcc.sh
+RUN bash /toolchain/src/build-windows-gcc.sh
+
+FROM flipperzero-toolchain-windows-build-deps AS flipperzero-toolchain-windows-python
+RUN DEBIAN_FRONTEND=noninteractive dpkg --add-architecture i386 && apt update && apt -y install xvfb wine wine32 wine64 unzip
+ADD https://www.python.org/ftp/python/3.11.2/python-3.11.2-amd64.exe /toolchain/src/src/archives
+ADD scripts/unpack-windows-python-wine.sh /toolchain/src/
+RUN bash /toolchain/src/unpack-windows-python-wine.sh
+
+FROM flipperzero-toolchain-windows-binutils AS flipperzero-toolchain-windows-gdb
+COPY --from=flipperzero-toolchain-windows-python /toolchain/windows-output-root/python /toolchain/windows-output-root/python
+ADD scripts/python3-config-windows-x86_64.sh /toolchain/src/
+ADD scripts/build-windows-gdb.sh /toolchain/src/
+#RUN bash /toolchain/src/build-windows-gdb.sh
