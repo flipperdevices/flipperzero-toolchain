@@ -34,4 +34,4 @@ FROM flipperzero-toolchain-windows-binutils AS flipperzero-toolchain-windows-gdb
 COPY --from=flipperzero-toolchain-windows-python /toolchain/windows-output-root/python /toolchain/windows-output-root/python
 ADD scripts/python3-config-windows-x86_64.sh /toolchain/src/
 ADD scripts/build-windows-gdb.sh /toolchain/src/
-#RUN bash /toolchain/src/build-windows-gdb.sh
+RUN bash /toolchain/src/build-windows-gdb.sh

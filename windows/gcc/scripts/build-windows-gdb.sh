@@ -104,5 +104,5 @@ build_windows_gdb_py() {
     popd;
 }
 
-#build_windows_gdb;
+build_windows_gdb;
 build_windows_gdb_py;
