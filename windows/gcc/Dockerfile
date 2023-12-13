@@ -65,7 +65,17 @@ ADD scripts/build-windows-flipper-tools.sh /toolchain/src/
 RUN bash /toolchain/src/build-windows-flipper-tools.sh
 
 FROM debian:11 as flipperzero-toolchain-windows
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install wine gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 xz-utils
+ADD https://developer.arm.com/-/media/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz -C /toolchain/src/src/
+RUN rm -rf /toolchain/src/src/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/usr/share/doc
+RUN cp -fr /toolchain/src/src/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/* /usr/
 COPY --from=flipperzero-toolchain-windows-binutils /toolchain/windows-output-root /toolchain/windows-output-root
 COPY --from=flipperzero-toolchain-windows-gdb /toolchain/windows-output-root /toolchain/windows-output-root
 COPY --from=flipperzero-toolchain-windows-gcc /toolchain/windows-output-root /toolchain/windows-output-root
 COPY --from=flipperzero-toolchain-windows-tools /toolchain/windows-output-root /toolchain/windows-output-root
+ADD requirements.txt /toolchain/
+RUN wine /toolchain/windows-output-root/python/python.exe -m pip install --upgrade pip
+RUN wine /toolchain/windows-output-root/python/python.exe -m pip install -r /toolchain/requirements.txt
+ADD scripts/strip.sh /usr/bin/
+RUN strip.sh
