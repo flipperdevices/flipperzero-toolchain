@@ -35,3 +35,37 @@ COPY --from=flipperzero-toolchain-windows-python /toolchain/windows-output-root/
 ADD scripts/python3-config-windows-x86_64.sh /toolchain/src/
 ADD scripts/build-windows-gdb.sh /toolchain/src/
 RUN bash /toolchain/src/build-windows-gdb.sh
+
+FROM flipperzero-toolchain-windows-build-deps AS flipperzero-toolchain-windows-tools
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install rsync git python3 unzip
+ADD https://github.com/Kitware/CMake/releases/download/v3.28.0/cmake-3.28.0-linux-x86_64.tar.gz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/cmake-3.28.0-linux-x86_64.tar.gz -C /tmp
+RUN rsync -azv /tmp/cmake-3.28.0-linux-x86_64/ /usr
+ADD https://github.com/protocolbuffers/protobuf/releases/download/v21.7/protobuf-cpp-3.21.7.tar.gz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/protobuf-cpp-3.21.7.tar.gz -C /toolchain/src/src/
+RUN mv /toolchain/src/src/protobuf-3.21.7 /toolchain/src/src/protobuf
+ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/llvm-17.0.6.src.tar.xz /toolchain/src/src/archives/
+RUN mkdir -p /toolchain/src/src/clang-format
+RUN tar -xvf /toolchain/src/src/archives/llvm-17.0.6.src.tar.xz -C /toolchain/src/src/clang-format
+ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/clang-17.0.6.src.tar.xz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/clang-17.0.6.src.tar.xz -C /toolchain/src/src/clang-format/llvm-17.0.6.src/tools/
+RUN mv /toolchain/src/src/clang-format/llvm-17.0.6.src/tools/clang-17.0.6.src /toolchain/src/src/clang-format/llvm-17.0.6.src/tools/clang
+ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/cmake-17.0.6.src.tar.xz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/cmake-17.0.6.src.tar.xz -C /toolchain/src/src/clang-format/
+RUN mv /toolchain/src/src/clang-format/cmake-17.0.6.src /toolchain/src/src/clang-format/cmake
+ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/third-party-17.0.6.src.tar.xz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/third-party-17.0.6.src.tar.xz -C /toolchain/src/src/clang-format/
+RUN mv /toolchain/src/src/clang-format/third-party-17.0.6.src /toolchain/src/src/clang-format/third-party
+ADD https://github.com/xpack-dev-tools/openocd-xpack/releases/download/v0.12.0-2/xpack-openocd-0.12.0-2-win32-x64.zip /toolchain/src/src/archives/
+RUN unzip /toolchain/src/src/archives/xpack-openocd-0.12.0-2-win32-x64.zip -d /tmp
+RUN rm -rf /tmp/xpack-openocd-0.12.0-2/README.md
+RUN rm -rf /tmp/xpack-openocd-0.12.0-2/distro-info
+RUN rsync -azv /tmp/xpack-openocd-0.12.0-2/ /toolchain/windows-output-root
+ADD scripts/build-windows-flipper-tools.sh /toolchain/src/
+RUN bash /toolchain/src/build-windows-flipper-tools.sh
+
+FROM debian:11 as flipperzero-toolchain-windows
+COPY --from=flipperzero-toolchain-windows-binutils /toolchain/windows-output-root /toolchain/windows-output-root
+COPY --from=flipperzero-toolchain-windows-gdb /toolchain/windows-output-root /toolchain/windows-output-root
+COPY --from=flipperzero-toolchain-windows-gcc /toolchain/windows-output-root /toolchain/windows-output-root
+COPY --from=flipperzero-toolchain-windows-tools /toolchain/windows-output-root /toolchain/windows-output-root
