@@ -30,6 +30,7 @@ build_windows_gdb() {
         --without-debuginfod \
         --without-guile \
         --disable-source-highlight \
+        --with-static-standard-libraries \
         --disable-objc-gc \
         --with-expat \
         "--with-libexpat-prefix=$WINDOWS_BUILD_ROOT" \
@@ -77,6 +78,7 @@ build_windows_gdb_py() {
         --without-debuginfod \
         --without-guile \
         --disable-source-highlight \
+        --with-static-standard-libraries \
         --disable-objc-gc \
         --with-expat \
         "--with-libexpat-prefix=$WINDOWS_BUILD_ROOT" \

@@ -32,6 +32,7 @@ function build_linux_gcc() {
         --with-gnu-ld \
         "--with-sysroot=$WINDOWS_OUTPUT_ROOT/arm-none-eabi" \
         --with-multilib-list=rmprofile \
+        "--with-host-libstdcxx=-static-libgcc -Wl,-Bstatic,-lstdc++,-Bdynamic -lm" \
         LDFLAGS="-L$WINDOWS_BUILD_ROOT/lib -L$WINDOWS_OUTPUT_ROOT/lib" \
         CPPFLAGS="-I$WINDOWS_BUILD_ROOT/include -I$WINDOWS_OUTPUT_ROOT/include -I$WINDOWS_OUTPUT_ROOT/include/readline";
     LDFLAGS="-L$WINDOWS_BUILD_ROOT/lib -L$WINDOWS_OUTPUT_ROOT/lib" CPPFLAGS="-I$WINDOWS_BUILD_ROOT/include -I$WINDOWS_OUTPUT_ROOT/include -I$WINDOWS_OUTPUT_ROOT/include/readline" make "-j$CPUS" CXXFLAGS="-g -O2";

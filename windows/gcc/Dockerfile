@@ -37,7 +37,7 @@ ADD scripts/build-windows-gdb.sh /toolchain/src/
 RUN bash /toolchain/src/build-windows-gdb.sh
 
 FROM flipperzero-toolchain-windows-build-deps AS flipperzero-toolchain-windows-tools
-RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install rsync git python3 unzip
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install rsync git python3 unzip automake autoconf libtool
 ADD https://github.com/Kitware/CMake/releases/download/v3.28.0/cmake-3.28.0-linux-x86_64.tar.gz /toolchain/src/src/archives/
 RUN tar -xvf /toolchain/src/src/archives/cmake-3.28.0-linux-x86_64.tar.gz -C /tmp
 RUN rsync -azv /tmp/cmake-3.28.0-linux-x86_64/ /usr
