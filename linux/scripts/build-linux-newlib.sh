@@ -2,15 +2,22 @@
 
 set -euo pipefail;
 
-NEWLIB_NANO_TEMP_ROOT=/toolchain/newlib-nano-temp
+LINUX_BUILD_ROOT=/toolchain/linux-build-root
 LINUX_OUTPUT_ROOT=/toolchain/linux-output-root
+LINUX_CONFIGURE_ROOT=/toolchain/linux-configure-root
+
+NEWLIB_ROOT=/toolchain/newlib-root
+NEWLIB_NANO_ROOT=/toolchain/newlib-nano-root
 
 CPUS="$(grep -c processor /proc/cpuinfo )";
 
-function build_new_lib() {
-    pushd /toolchain/src/src/newlib-cygwin;
-    CFLAGS_FOR_TARGET="-g -Os -ffunction-sections -fdata-sections" ./configure \
-        "--prefix=$LINUX_OUTPUT_ROOT" \
+function build_gcc_newlib() {
+    rm -rf "$LINUX_CONFIGURE_ROOT/newlib";
+    rm -rf "$NEWLIB_ROOT";
+    mkdir -p "$LINUX_CONFIGURE_ROOT/newlib";
+    pushd "$LINUX_CONFIGURE_ROOT/newlib";
+    CFLAGS_FOR_TARGET="-g -Os -ffunction-sections -fdata-sections" /toolchain/src/src/newlib-cygwin/configure \
+        "--prefix=$NEWLIB_ROOT" \
         --target=arm-none-eabi \
         --disable-newlib-supplied-syscalls \
         --enable-newlib-retargetable-locking \
@@ -24,10 +31,13 @@ function build_new_lib() {
     popd;
 }
 
-function build_new_lib_nano() {
-    pushd /toolchain/src/src/newlib-cygwin;
-    CFLAGS_FOR_TARGET="-g -Os -ffunction-sections -fdata-sections" ./configure \
-        "--prefix=$NEWLIB_NANO_TEMP_ROOT" \
+function build_gcc_newlib_nano() {
+    rm -rf "$LINUX_CONFIGURE_ROOT/newlib-nano";
+    rm -rf "$NEWLIB_NANO_ROOT";
+    mkdir -p "$LINUX_CONFIGURE_ROOT/newlib-nano";
+    pushd "$LINUX_CONFIGURE_ROOT/newlib-nano";
+    CFLAGS_FOR_TARGET="-g -Os -ffunction-sections -fdata-sections" /toolchain/src/src/newlib-cygwin/configure \
+        "--prefix=$NEWLIB_NANO_ROOT" \
         --target=arm-none-eabi \
         --disable-newlib-supplied-syscalls \
         --enable-newlib-retargetable-locking \
@@ -46,5 +56,5 @@ function build_new_lib_nano() {
     popd;
 }
 
-build_new_lib;
-build_new_lib_nano;
+build_gcc_newlib;
+build_gcc_newlib_nano;

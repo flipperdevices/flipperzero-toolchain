@@ -4,12 +4,15 @@ set -euo pipefail;
 
 LINUX_BUILD_ROOT=/toolchain/linux-build-root
 LINUX_OUTPUT_ROOT=/toolchain/linux-output-root
+LINUX_CONFIGURE_ROOT=/toolchain/linux-configure-root
 
 CPUS="$(grep -c processor /proc/cpuinfo )";
 
 function build_binutils() {
-    pushd /toolchain/src/src/binutils-gdb;
-    ./configure \
+    rm -rf "$LINUX_CONFIGURE_ROOT/binutils";
+    mkdir -p "$LINUX_CONFIGURE_ROOT/binutils";
+    pushd "$LINUX_CONFIGURE_ROOT/binutils";
+    /toolchain/src/src/binutils-gdb/configure \
         --enable-initfini-array \
         --disable-nls \
         --without-x \

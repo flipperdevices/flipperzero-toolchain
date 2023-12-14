@@ -2,8 +2,12 @@
 
 set -euo pipefail;
 
+LINUX_BUILD_ROOT=/toolchain/linux-build-root
 LINUX_OUTPUT_ROOT=/toolchain/linux-output-root
-NEWLIB_NANO_TEMP_ROOT=/toolchain/newlib-nano-temp
+LINUX_CONFIGURE_ROOT=/toolchain/linux-configure-root
+
+NEWLIB_ROOT=/toolchain/newlib-root
+NEWLIB_NANO_ROOT=/toolchain/newlib-nano-root
 
 CPUS="$(grep -c processor /proc/cpuinfo )";
 
@@ -40,10 +44,10 @@ copy_multi_libs() {
     done
 }
 
-copy_multi_libs src_prefix="$NEWLIB_NANO_TEMP_ROOT/arm-none-eabi/lib" \
+copy_multi_libs src_prefix="$NEWLIB_NANO_ROOT/arm-none-eabi/lib" \
 		dst_prefix="$LINUX_OUTPUT_ROOT/arm-none-eabi/lib" \
 		target_gcc="$LINUX_OUTPUT_ROOT/bin/arm-none-eabi-gcc";
 
 mkdir -p "$LINUX_OUTPUT_ROOT/arm-none-eabi/include/newlib-nano";
-mv "$NEWLIB_NANO_TEMP_ROOT/arm-none-eabi/include/newlib.h" \
+mv "$NEWLIB_NANO_ROOT/arm-none-eabi/include/newlib.h" \
 	"$LINUX_OUTPUT_ROOT/arm-none-eabi/include/newlib-nano/newlib.h";

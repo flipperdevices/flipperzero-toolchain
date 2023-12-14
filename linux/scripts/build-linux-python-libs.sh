@@ -3,6 +3,7 @@
 
 set -euo pipefail;
 
+LINUX_CONFIGURE_ROOT=/toolchain/linux-configure-root
 LINUX_OUTPUT_ROOT=/toolchain/linux-output-root
 
 CPUS="$(grep -c processor /proc/cpuinfo)";
@@ -19,8 +20,10 @@ function cleanup_relink() {
 }
 
 function build_openssl() {
-    pushd /toolchain/src/src/openssl;
-    ./config \
+    rm -rf "$LINUX_CONFIGURE_ROOT/openssl";
+    mkdir -p "$LINUX_CONFIGURE_ROOT/openssl";
+    pushd "$LINUX_CONFIGURE_ROOT/openssl";
+    /toolchain/src/src/openssl/config \
         --prefix="$LINUX_OUTPUT_ROOT";
     make "-j$CPUS";
     make install_sw;
@@ -29,8 +32,10 @@ function build_openssl() {
 }
 
 function build_libffi() {
-    pushd /toolchain/src/src/libffi;
-    ./configure \
+    rm -rf "$LINUX_CONFIGURE_ROOT/libffi";
+    mkdir -p "$LINUX_CONFIGURE_ROOT/libffi";
+    pushd "$LINUX_CONFIGURE_ROOT/libffi";
+    /toolchain/src/src/libffi/configure \
         --disable-docs \
         --enable-shared=yes \
         --enable-static=no \
@@ -42,8 +47,10 @@ function build_libffi() {
 }
 
 function build_ncurses() {
-    pushd /toolchain/src/src/ncurses;
-    ./configure \
+    rm -rf "$LINUX_CONFIGURE_ROOT/ncurses";
+    mkdir -p "$LINUX_CONFIGURE_ROOT/ncurses";
+    pushd "$LINUX_CONFIGURE_ROOT/ncurses";
+    /toolchain/src/src/ncurses/configure \
         --enable-widec \
         --with-shared \
         --without-termlib \
@@ -56,8 +63,10 @@ function build_ncurses() {
 }
 
 function build_zlib() {
-    pushd /toolchain/src/src/zlib;
-    ./configure \
+    rm -rf "$LINUX_CONFIGURE_ROOT/zlib";
+    mkdir -p "$LINUX_CONFIGURE_ROOT/zlib";
+    pushd "$LINUX_CONFIGURE_ROOT/zlib";
+    /toolchain/src/src/zlib/configure \
         --prefix="$LINUX_OUTPUT_ROOT";
     make "-j$CPUS";
     make install;
@@ -66,8 +75,10 @@ function build_zlib() {
 }
 
 function build_readline() {
-    pushd /toolchain/src/src/readline;
-    ./configure \
+    rm -rf "$LINUX_CONFIGURE_ROOT/readline";
+    mkdir -p "$LINUX_CONFIGURE_ROOT/readline";
+    pushd "$LINUX_CONFIGURE_ROOT/readline";
+    /toolchain/src/src/readline/configure \
         --prefix="$LINUX_OUTPUT_ROOT" \
         --enable-shared=yes \
         --enable-static=no;
