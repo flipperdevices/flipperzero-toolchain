@@ -46,13 +46,13 @@ function build_clang_format() {
         -DCMAKE_SYSTEM_NAME=Windows \
         -DCMAKE_RC_COMPILER=x86_64-w64-mingw32-windres \
         -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc-posix \
-        -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++-posix;
+        -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++-posix \
 	    -DCLANG_DEFAULT_RTLIB=compiler-rt \
 	    -DCLANG_DEFAULT_UNWINDLIB=libunwind \
 	    -DCLANG_DEFAULT_CXX_STDLIB=libc++ \
 	    -DCLANG_DEFAULT_LINKER=lld \
 	    -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -s" \
-	    -DCMAKE_CXX_FLAGS="-static" \
+	    -DCMAKE_CXX_FLAGS="-static";
     cmake \
         --build build \
         --target clang-format \
@@ -64,7 +64,7 @@ function build_clang_format() {
 }
 
 function cleanup() {
-    find "$WINDOWS_OUTPUT_ROOT" -name "*.a" -or -name "*.la" -delete;
+    find "$WINDOWS_OUTPUT_ROOT" \( -name "*.a" -or -name "*.la" \) -delete;
 }
 
 build_protobuf;
