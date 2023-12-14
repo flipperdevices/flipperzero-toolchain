@@ -1,6 +1,6 @@
 FROM debian:11 as flipperzero-toolchain-linux-src
 ADD https://developer.arm.com/-/media/Files/downloads/gnu/12.3.rel1/srcrel/arm-gnu-toolchain-src-snapshot-12.3.rel1.tar.xz /toolchain/src/src/archives/
-RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install build-essential xz-utils m4 bison flex texinfo file patchelf
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install build-essential xz-utils m4 bison flex texinfo file patchelf rsync
 RUN tar -xvf /toolchain/src/src/archives/arm-gnu-toolchain-src-snapshot-12.3.rel1.tar.xz -C /toolchain/src/src/
 WORKDIR /toolchain/src/
 
@@ -43,7 +43,7 @@ RUN bash /toolchain/src/build-linux-binutils.sh
 FROM flipperzero-toolchain-linux-build-deps AS flipperzero-toolchain-linux-gdb
 COPY --from=flipperzero-toolchain-linux-python /toolchain/linux-output-root /toolchain/linux-output-root
 ADD scripts/relink.sh /usr/bin/
-ADD patch/gdb_curses.h /toolchain/srcsrc/binutils-gdb/gdb/
+ADD patch/gdb_curses.h /toolchain/src/src/binutils-gdb/gdb/
 ADD scripts/build-linux-gdb.sh /toolchain/src/
 RUN bash /toolchain/src/build-linux-gdb.sh
 
@@ -61,8 +61,8 @@ RUN tar -xvf /toolchain/src/src/archives/arm-gnu-toolchain-12.2.rel1-x86_64-arm-
 RUN rm -rf /usr/share/doc/gcc
 RUN cp -rf /toolchain/src/src/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/* /usr/
 COPY --from=flipperzero-toolchain-linux-python /toolchain/linux-output-root /toolchain/linux-output-root
-COPY --from=flipperzero-toolchain-linux-newlib-nano /toolchain/linux-output-root /toolchain/linux-output-root
-COPY --from=flipperzero-toolchain-linux-newlib-nano /toolchain/newlib-nano-temp /toolchain/newlib-nano-temp
+COPY --from=flipperzero-toolchain-linux-newlib-nano /toolchain/newlib-root /toolchain/newlib-root
+COPY --from=flipperzero-toolchain-linux-newlib-nano /toolchain/newlib-nano-root /toolchain/newlib-nano-root
 ADD scripts/relink.sh /usr/bin/
 ADD scripts/build-linux-gcc.sh /toolchain/src/
 RUN bash /toolchain/src/build-linux-gcc.sh
@@ -70,15 +70,36 @@ ADD scripts/move_newlib_to_nano.sh /toolchain
 RUN bash /toolchain/move_newlib_to_nano.sh
 
 FROM flipperzero-toolchain-linux-build-deps AS flipperzero-toolchain-linux-tools
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install automake autoconf libtool python3 git
+ADD https://github.com/Kitware/CMake/releases/download/v3.28.0/cmake-3.28.0-linux-x86_64.tar.gz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/cmake-3.28.0-linux-x86_64.tar.gz -C /tmp
+RUN rsync -azv /tmp/cmake-3.28.0-linux-x86_64/ /usr
 ADD https://github.com/protocolbuffers/protobuf/releases/download/v21.7/protobuf-cpp-3.21.7.tar.gz /toolchain/src/src/archives/
-ADD https://github.com/xpack-dev-tools/openocd-xpack/releases/download/v0.12.0-2/xpack-openocd-0.12.0-2-linux-x64.tar.gz /toolchain/src/src/archives/
 RUN tar -xvf /toolchain/src/src/archives/protobuf-cpp-3.21.7.tar.gz -C /toolchain/src/src/
-RUN tar -xvf /toolchain/src/src/archives/xpack-openocd-0.12.0-2-linux-x64.tar.gz -C /toolchain/src/src/
 RUN mv /toolchain/src/src/protobuf-3.21.7 /toolchain/src/src/protobuf
+ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/llvm-17.0.6.src.tar.xz /toolchain/src/src/archives/
+RUN mkdir -p /toolchain/src/src/clang-format
+RUN tar -xvf /toolchain/src/src/archives/llvm-17.0.6.src.tar.xz -C /toolchain/src/src/clang-format
+ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/clang-17.0.6.src.tar.xz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/clang-17.0.6.src.tar.xz -C /toolchain/src/src/clang-format/llvm-17.0.6.src/tools/
+RUN mv /toolchain/src/src/clang-format/llvm-17.0.6.src/tools/clang-17.0.6.src /toolchain/src/src/clang-format/llvm-17.0.6.src/tools/clang
+ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/cmake-17.0.6.src.tar.xz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/cmake-17.0.6.src.tar.xz -C /toolchain/src/src/clang-format/
+RUN mv /toolchain/src/src/clang-format/cmake-17.0.6.src /toolchain/src/src/clang-format/cmake
+ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/third-party-17.0.6.src.tar.xz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/third-party-17.0.6.src.tar.xz -C /toolchain/src/src/clang-format/
+RUN mv /toolchain/src/src/clang-format/third-party-17.0.6.src /toolchain/src/src/clang-format/third-party
+ADD https://github.com/protocolbuffers/protobuf/releases/download/v21.7/protobuf-cpp-3.21.7.tar.gz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/protobuf-cpp-3.21.7.tar.gz -C /toolchain/src/src/
+RUN mv /toolchain/src/src/protobuf-3.21.7 /toolchain/src/src/protobuf
+ADD https://github.com/xpack-dev-tools/openocd-xpack/releases/download/v0.12.0-2/xpack-openocd-0.12.0-2-linux-x64.tar.gz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/xpack-openocd-0.12.0-2-linux-x64.tar.gz -C /tmp
+RUN rm -rf /tmp/xpack-openocd-0.12.0-2/README.md
+RUN rm -rf /tmp/xpack-openocd-0.12.0-2/distro-info
+RUN rsync -azv /tmp/xpack-openocd-0.12.0-2/ /toolchain/linux-output-root
 ADD scripts/relink.sh /usr/bin/
 ADD scripts/build-linux-flipper-tools.sh /toolchain/src/
 RUN bash /toolchain/src/build-linux-flipper-tools.sh
-RUN cp -r /toolchain/src/src/xpack-openocd-0.12.0-2/*  /toolchain/linux-output-root/
 
 FROM debian:11 as flipperzero-toolchain
 COPY --from=flipperzero-toolchain-linux-binutils /toolchain/linux-output-root /toolchain/linux-output-root

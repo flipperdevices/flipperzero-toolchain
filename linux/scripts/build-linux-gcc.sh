@@ -23,7 +23,7 @@ function cleanup_relink() {
 }
 
 function copy_newlib() {
-    rsync -av "$NEWLIB_ROOT/" "$WINDOWS_OUTPUT_ROOT";
+    rsync -av "$NEWLIB_ROOT/" "$LINUX_OUTPUT_ROOT";
 }
 
 function build_linux_gcc() {

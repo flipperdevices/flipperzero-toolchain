@@ -38,8 +38,7 @@ function build_clang_format() {
         -DLLVM_INCLUDE_BENCHMARKS=OFF \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX="$LINUX_OUTPUT_ROOT" \
-        -DLLVM_EXTERNAL_PROJECTS=clang \
-	    -DCMAKE_CXX_FLAGS="-static";
+        -DLLVM_EXTERNAL_PROJECTS=clang;
     cmake \
         --build build \
         --target clang-format \
