@@ -11,6 +11,15 @@ jobs:
   build-linux:
     runs-on: [self-hosted, FlipperZeroToolchain, Linux, X64]
     steps:
+      - name: 'Wipe workspace'
+        run: find ./ -mount -maxdepth 1 -exec rm -rf {} \;
+
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha }}
+
       - name: 'Build linux toolchain'
         run: |
           docker build -t flipperzero-toolchain-linux linux
