@@ -64,7 +64,7 @@ RUN rsync -azv /tmp/xpack-openocd-0.12.0-2/ /toolchain/windows-output-root
 ADD scripts/build-windows-flipper-tools.sh /toolchain/src/
 RUN bash /toolchain/src/build-windows-flipper-tools.sh
 
-FROM debian:11 as flipperzero-toolchain-windows
+FROM debian:11 AS flipperzero-toolchain-windows
 RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install wine gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 xz-utils
 ADD https://developer.arm.com/-/media/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz /toolchain/src/src/archives/
 RUN tar -xvf /toolchain/src/src/archives/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz -C /toolchain/src/src/
