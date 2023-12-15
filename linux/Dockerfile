@@ -102,7 +102,7 @@ ADD scripts/relink.sh /usr/bin/
 ADD scripts/build-linux-flipper-tools.sh /toolchain/src/
 RUN bash /toolchain/src/build-linux-flipper-tools.sh
 
-FROM debian:11 as flipperzero-toolchain
+FROM debian:11 as flipperzero-toolchain-linux
 COPY --from=flipperzero-toolchain-linux-binutils /toolchain/linux-output-root /toolchain/linux-output-root
 COPY --from=flipperzero-toolchain-linux-gdb /toolchain/linux-output-root /toolchain/linux-output-root
 COPY --from=flipperzero-toolchain-linux-gcc /toolchain/linux-output-root /toolchain/linux-output-root
