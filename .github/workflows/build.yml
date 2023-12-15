@@ -10,7 +10,7 @@ on:
 jobs:
   build-linux:
     runs-on: [self-hosted, FlipperZeroShell, Linux, X64]
-  steps:
-    - name: 'Build linux toolchain'
-      run: |
-        docker build -t flipperzero-toolchain-linux linux
+    steps:
+      - name: 'Build linux toolchain'
+        run: |
+          docker build -t flipperzero-toolchain-linux linux
