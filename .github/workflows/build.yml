@@ -1,0 +1,17 @@
+name: 'Build'
+
+on:
+  push:
+    branches:
+      - dev
+    tags:
+      - '*'
+
+jobs:
+  build-linux:
+    runs-on: [self-hosted, FlipperZeroShell, Linux, X64]
+  steps:
+      - name: 'Build linux toolchain'
+        run: |
+          cd linux
+          docker build -t flipperzero-toolchain-linux .
