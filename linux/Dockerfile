@@ -68,6 +68,7 @@ ADD scripts/build-linux-gcc.sh /toolchain/src/
 RUN bash /toolchain/src/build-linux-gcc.sh
 ADD scripts/move_newlib_to_nano.sh /toolchain
 RUN bash /toolchain/move_newlib_to_nano.sh
+RUN relink.sh /toolchain/linux-output-root
 
 FROM flipperzero-toolchain-linux-build-deps AS flipperzero-toolchain-linux-tools
 RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install automake autoconf libtool python3 git

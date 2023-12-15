@@ -15,13 +15,6 @@ HOST="$ARCH-linux-gnu";
 
 CPUS="$(grep -c processor /proc/cpuinfo )";
 
-function cleanup_relink() {
-    local DIRECTORY;
-    DIRECTORY="$1";
-    rm -rf "$DIRECTORY/share/man"
-    relink.sh "$DIRECTORY";
-}
-
 function copy_newlib() {
     rsync -av "$NEWLIB_ROOT/" "$LINUX_OUTPUT_ROOT";
 }
@@ -57,7 +50,6 @@ function build_linux_gcc() {
     LDFLAGS="-L$LINUX_BUILD_ROOT/lib -L$LINUX_OUTPUT_ROOT/lib" CPPFLAGS="-I$LINUX_BUILD_ROOT/include -I$LINUX_OUTPUT_ROOT/include -I$LINUX_OUTPUT_ROOT/include/readline" LD_LIBRARY_PATH="LINUX_OUTPUT_ROOT/lib" make "-j$CPUS" CXXFLAGS="-g -O2";
     LDFLAGS="-L$LINUX_BUILD_ROOT/lib -L$LINUX_OUTPUT_ROOT/lib" CPPFLAGS="-I$LINUX_BUILD_ROOT/include -I$LINUX_OUTPUT_ROOT/include -I$LINUX_OUTPUT_ROOT/include/readline" LD_LIBRARY_PATH="LINUX_OUTPUT_ROOT/lib" make install;
     popd;
-    cleanup_relink "$LINUX_OUTPUT_ROOT";
 }
 
 function build_linux_gcc_nano() {
@@ -95,4 +87,4 @@ function build_linux_gcc_nano() {
 
 copy_newlib;
 build_linux_gcc;
-build_linux_gcc_newlib;
+build_linux_gcc_nano;
