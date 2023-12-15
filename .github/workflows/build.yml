@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-linux:
-    runs-on: [self-hosted, FlipperZeroShell, Linux, X64]
+    runs-on: [self-hosted, FlipperZeroToolchain, Linux, X64]
     steps:
       - name: 'Build linux toolchain'
         run: |
