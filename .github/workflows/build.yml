@@ -20,9 +20,32 @@ jobs:
           fetch-depth: 1
           ref: ${{ github.event.pull_request.head.sha }}
 
+      - name: 'Set image tag and name'
+        id: tag
+        run: |
+          IMAGE_TAG="0"
+          if [[ "${{ github.ref }}" == "refs/tags/"* ]]; then
+            REF=${{ github.ref }};
+            TAG_FULL=${REF#refs/*/};
+            IMAGE_TAG=${TAG_FULL//\//_};
+          fi
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+
       - name: 'Build linux toolchain'
         run: |
-          docker build -t flipperzero-toolchain-linux linux
+          docker build -t flipperzero-toolchain-linux:${IMAGE_TAG} linux
+
+      - name: 'Bundle and upload linux toolchain'
+        if: ${{ steps.tag.outputs.image_tag != '0' }}
+        run: |
+          docker run --rm -it \
+              -e "TOOLCHAIN_VERSION=$IMAGE_TAG" \
+              -e "INDEXER_URl=${{ secrets.INDEXER_URL }}" \
+              -e "INDEXER_TOKEN=${{ secrets.INDEXER_TOKEN }}" \
+              flipperzero-toolchain-linux:${IMAGE_TAG} \
+              /usr/bin/bundle_upload.sh
+
   build-windows:
     runs-on: [self-hosted, FlipperZeroToolchain, Linux, X64]
     steps:
@@ -37,4 +60,14 @@ jobs:
 
       - name: 'Build windows toolchain'
         run: |
-          docker build -t flipperzero-toolchain-windows windows
+          docker build -t flipperzero-toolchain-windows:${IMAGE_TAG} windows
+
+      - name: 'Bundle and upload windows toolchain'
+        if: ${{ steps.tag.outputs.image_tag != '0' }}
+        run: |
+          docker run --rm -it \
+              -e "TOOLCHAIN_VERSION=$IMAGE_TAG" \
+              -e "INDEXER_URl=${{ secrets.INDEXER_URL }}" \
+              -e "INDEXER_TOKEN=${{ secrets.INDEXER_TOKEN }}" \
+              flipperzero-toolchain-windows:${IMAGE_TAG} \
+              /usr/bin/bundle_upload.sh
