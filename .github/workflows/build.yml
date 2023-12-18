@@ -39,7 +39,7 @@ jobs:
       - name: 'Bundle and upload linux toolchain'
         #if: ${{ steps.tag.outputs.image_tag != '0' }}
         run: |
-          docker run --rm -it \
+          docker run --rm \
               -e "TOOLCHAIN_VERSION=$IMAGE_TAG" \
               -e "INDEXER_URl=${{ secrets.INDEXER_URL }}" \
               -e "INDEXER_TOKEN=${{ secrets.INDEXER_TOKEN }}" \
@@ -77,7 +77,7 @@ jobs:
       - name: 'Bundle and upload windows toolchain'
         #if: ${{ steps.tag.outputs.image_tag != '0' }}
         run: |
-          docker run --rm -it \
+          docker run --rm \
               -e "TOOLCHAIN_VERSION=$IMAGE_TAG" \
               -e "INDEXER_URl=${{ secrets.INDEXER_URL }}" \
               -e "INDEXER_TOKEN=${{ secrets.INDEXER_TOKEN }}" \
