@@ -78,4 +78,5 @@ ADD requirements.txt /toolchain/
 RUN wine /toolchain/windows-output-root/python/python.exe -m pip install --upgrade pip
 RUN wine /toolchain/windows-output-root/python/python.exe -m pip install -r /toolchain/requirements.txt
 ADD scripts/strip.sh /usr/bin/
+ADD scripts/bundle_upload.sh /usr/bin/
 RUN strip.sh

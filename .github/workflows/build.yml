@@ -41,7 +41,7 @@ jobs:
         run: |
           docker run --rm \
               -e "TOOLCHAIN_VERSION=$IMAGE_TAG" \
-              -e "INDEXER_URl=${{ secrets.INDEXER_URL }}" \
+              -e "INDEXER_URL=${{ secrets.INDEXER_URL }}" \
               -e "INDEXER_TOKEN=${{ secrets.INDEXER_TOKEN }}" \
               flipperzero-toolchain-linux:${IMAGE_TAG} \
               /usr/bin/bundle_upload.sh
@@ -79,7 +79,7 @@ jobs:
         run: |
           docker run --rm \
               -e "TOOLCHAIN_VERSION=$IMAGE_TAG" \
-              -e "INDEXER_URl=${{ secrets.INDEXER_URL }}" \
+              -e "INDEXER_URL=${{ secrets.INDEXER_URL }}" \
               -e "INDEXER_TOKEN=${{ secrets.INDEXER_TOKEN }}" \
               flipperzero-toolchain-windows:${IMAGE_TAG} \
               /usr/bin/bundle_upload.sh
