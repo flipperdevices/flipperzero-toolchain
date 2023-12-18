@@ -9,21 +9,21 @@
 #ADD scripts/build-mac-binutils.sh /toolchain/src/
 #RUN bash /toolchain/src/build-mac-binutils.sh
 
-FROM MacOSVenturaWithBrew
-RUN brew install coreutils
-ADD https://www.python.org/ftp/python/3.11.2/Python-3.11.2.tgz /toolchain/src/src/archives/
-RUN tar -xvf /toolchain/src/src/archives/Python-3.11.2.tgz -C /toolchain/src/src/
-RUN mv /toolchain/src/src/Python-3.11.2 /toolchain/src/src/python
-ADD https://www.openssl.org/source/openssl-1.1.1w.tar.gz /toolchain/src/src/archives/
-RUN tar -xvf /toolchain/src/src/archives/openssl-1.1.1w.tar.gz -C /toolchain/src/src/
-RUN mv /toolchain/src/src/openssl-1.1.1w /toolchain/src/src/openssl
-ADD scripts/build-mac-python-libs.sh /toolchain/src/
-ADD scripts/build-mac-python.sh /toolchain/src/
-ADD scripts/relink.sh /usr/bin
-RUN bash /toolchain/src/build-mac-python-libs.sh
-RUN bash /toolchain/src/build-mac-python.sh
-RUN relink.sh /toolchain/mac-x86_64-output-root
-RUN relink.sh /toolchain/mac-arm64-output-root
+#FROM MacOSVenturaWithBrew
+#RUN brew install coreutils
+#ADD https://www.python.org/ftp/python/3.11.2/Python-3.11.2.tgz /toolchain/src/src/archives/
+#RUN tar -xvf /toolchain/src/src/archives/Python-3.11.2.tgz -C /toolchain/src/src/
+#RUN mv /toolchain/src/src/Python-3.11.2 /toolchain/src/src/python
+#ADD https://www.openssl.org/source/openssl-1.1.1w.tar.gz /toolchain/src/src/archives/
+#RUN tar -xvf /toolchain/src/src/archives/openssl-1.1.1w.tar.gz -C /toolchain/src/src/
+#RUN mv /toolchain/src/src/openssl-1.1.1w /toolchain/src/src/openssl
+#ADD scripts/build-mac-python-libs.sh /toolchain/src/
+#ADD scripts/build-mac-python.sh /toolchain/src/
+#ADD scripts/relink.sh /usr/bin
+#RUN bash /toolchain/src/build-mac-python-libs.sh
+#RUN bash /toolchain/src/build-mac-python.sh
+#RUN relink.sh /toolchain/mac-x86_64-output-root
+#RUN relink.sh /toolchain/mac-arm64-output-root
 
 #FROM flipperzero-toolchain-binutils AS flipperzero-toolchain-gdb
 #COPY --from=flipperzero-toolchain-python /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
@@ -73,7 +73,7 @@ RUN relink.sh /toolchain/mac-arm64-output-root
 #RUN relink.sh /toolchain/mac-x86_64-output-root
 #RUN relink.sh /toolchain/mac-arm64-output-root
 
-FROM MacOSVenturaWithBrew AS flipperzero-toolchain
+FROM MacOSVenturaWithBrew AS flipperzero-toolchain-mac
 #RUN brew install coreutils bison
 #RUN brew link bison --force
 #COPY --from=flipperzero-toolchain-gdb /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
@@ -87,8 +87,9 @@ FROM MacOSVenturaWithBrew AS flipperzero-toolchain
 #RUN /toolchain/mac-x86_64-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt
 #RUN /toolchain/mac-arm64-output-root/bin/python3 -m pip install --upgrade pip
 #RUN /toolchain/mac-arm64-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt
-ADD scripts/strip.sh /usr/bin/
+#ADD scripts/strip.sh /usr/bin/
 #ADD scripts/relink.sh /usr/bin/
 #RUN relink.sh /toolchain/mac-x86_64-output-root
 #RUN relink.sh /toolchain/mac-arm64-output-root
-RUN strip.sh
+#RUN strip.sh
+ADD scripts/bundle_upload.sh /usr/bin/
