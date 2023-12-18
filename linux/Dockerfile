@@ -107,7 +107,7 @@ COPY --from=flipperzero-toolchain-linux-binutils /toolchain/linux-output-root /t
 COPY --from=flipperzero-toolchain-linux-gdb /toolchain/linux-output-root /toolchain/linux-output-root
 COPY --from=flipperzero-toolchain-linux-gcc /toolchain/linux-output-root /toolchain/linux-output-root
 COPY --from=flipperzero-toolchain-linux-tools /toolchain/linux-output-root /toolchain/linux-output-root
-RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install build-essential file patchelf
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install build-essential file patchelf curl
 ADD requirements.txt /toolchain/requirements.txt
 RUN /toolchain/linux-output-root/bin/python3 -m pip install --upgrade pip
 RUN /toolchain/linux-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt
