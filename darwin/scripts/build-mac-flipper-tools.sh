@@ -41,7 +41,7 @@ function build_protobuf_x86_64() {
         PATH="$MAC_X86_64_OUTPUT_ROOT/bin:$PATH" \
         make "-j$CPUS";
     PATH="$MAC_X86_64_OUTPUT_ROOT/bin:$PATH" \
-    	make install;
+        make install;
     popd;
 }
 
@@ -72,7 +72,7 @@ function build_protobuf_arm64() {
         PATH="$MAC_ARM64_OUTPUT_ROOT/bin:$PATH" \
         make "-j$CPUS";
     PATH="$MAC_ARM64_OUTPUT_ROOT/bin:$PATH" \
-    	make install;
+        make install;
     popd;
 }
 
@@ -84,11 +84,12 @@ function build_clang_format_x86_64() {
         CXXFLAGS="$MAC_X86_64_FLAGS" \
         CFLAGS="$MAC_X86_64_FLAGS" \
         LDFLAGS="$MAC_X86_64_FLAGS" \
-        cmake -S /tmp/test/src/llvm-17.0.6.src \
+        cmake \
+            -S /toolchain/src/src/clang-format/llvm-17.0.6.src \
             -B build \
             -DLLVM_INCLUDE_BENCHMARKS=OFF \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX=/tmp/test/out \
+            "-DCMAKE_INSTALL_PREFIX=$MAC_X86_64_OUTPUT_ROOT" \
             -DLLVM_EXTERNAL_PROJECTS=clang \
             -DCMAKE_OSX_ARCHITECTURES=x86_64;
     CPPFLAGS="$MAC_X86_64_FLAGS" \
@@ -100,8 +101,47 @@ function build_clang_format_x86_64() {
             "build" \
             "--target" \
             "clang-format" \
-            -j10;
+            "-j$CPUS";
+    cmake \
+        --install build \
+        --strip \
+        --component clang-format;
+    popd;
 }
 
+function build_clang_format_arm64() {
+    rm -rf "$MAC_ARM64_CONFIGURE_ROOT/clang-format";
+    mkdir -p "$MAC_ARM64_CONFIGURE_ROOT/clang-format";
+    pushd "$MAC_ARM64_CONFIGURE_ROOT/clang-format";
+    CPPFLAGS="$MAC_ARM64_FLAGS" \
+        CXXFLAGS="$MAC_ARM64_FLAGS" \
+        CFLAGS="$MAC_ARM64_FLAGS" \
+        LDFLAGS="$MAC_ARM64_FLAGS" \
+        cmake \
+            -S /toolchain/src/src/clang-format/llvm-17.0.6.src \
+            -B build \
+            -DLLVM_INCLUDE_BENCHMARKS=OFF \
+            -DCMAKE_BUILD_TYPE=Release \
+            "-DCMAKE_INSTALL_PREFIX=$MAC_ARM64_OUTPUT_ROOT" \
+            -DLLVM_EXTERNAL_PROJECTS=clang \
+            -DCMAKE_OSX_ARCHITECTURES=arm64;
+    CPPFLAGS="$MAC_ARM64_FLAGS" \
+        CXXFLAGS="$MAC_ARM64_FLAGS" \
+        CFLAGS="$MAC_ARM64_FLAGS" \
+        LDFLAGS="$MAC_ARM64_FLAGS"\
+        cmake \
+            "--build" \
+            "build" \
+            "--target" \
+            "clang-format" \
+            "-j$CPUS";
+    cmake \
+        --install build \
+        --strip \
+        --component clang-format;
+    popd;
+}
 build_protobuf_x86_64;
 build_protobuf_arm64;
+build_clang_format_x86_64;
+build_clang_format_arm64;

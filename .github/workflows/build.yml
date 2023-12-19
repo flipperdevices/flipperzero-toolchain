@@ -83,3 +83,41 @@ jobs:
               -e "INDEXER_TOKEN=${{ secrets.INDEXER_TOKEN }}" \
               flipperzero-toolchain-windows:${IMAGE_TAG} \
               /usr/bin/bundle_upload.sh
+
+  build-mac:
+    runs-on: [self-hosted, macOS, ARM64]
+    steps:
+      - name: 'Wipe workspace'
+        run: find ./ -mount -maxdepth 1 -exec rm -rf {} \;
+
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: 'Set image tag and name'
+        id: tag
+        run: |
+          IMAGE_TAG="0"
+          if [[ "${{ github.ref }}" == "refs/tags/"* ]]; then
+            REF=${{ github.ref }};
+            TAG_FULL=${REF#refs/*/};
+            IMAGE_TAG=${TAG_FULL//\//_};
+          fi
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+
+      #- name: 'Build mac toolchain'
+      # run: |
+      #    sudo chmocker build -t flipperzero-toolchain-mac:${IMAGE_TAG} darwin
+
+      - name: 'Bundle and upload mac toolchain'
+        #if: ${{ steps.tag.outputs.image_tag != '0' }}
+        run: |
+          sudo chmocker run --rm \
+              -e "TOOLCHAIN_VERSION=$IMAGE_TAG" \
+              -e "INDEXER_URL=${{ secrets.INDEXER_URL }}" \
+              -e "INDEXER_TOKEN=${{ secrets.INDEXER_TOKEN }}" \
+              flipperzero-toolchain-windows:${IMAGE_TAG} \
+              /usr/bin/bundle_upload.sh

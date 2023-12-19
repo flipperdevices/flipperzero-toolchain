@@ -52,9 +52,22 @@
 #RUN bash /toolchain/src/move_newlib_to_nano.sh
 
 #FROM flipperzero-toolchain-binutils AS flipperzero-toolchain-tools
+#RUN brew install cmake automake autoconf
 #ADD https://github.com/protocolbuffers/protobuf/releases/download/v21.7/protobuf-cpp-3.21.7.tar.gz /toolchain/src/src/archives/
 #RUN tar -xvf /toolchain/src/src/archives/protobuf-cpp-3.21.7.tar.gz -C /toolchain/src/src/
 #RUN mv /toolchain/src/src/protobuf-3.21.7 /toolchain/src/src/protobuf
+#ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/llvm-17.0.6.src.tar.xz /toolchain/src/src/archives/
+#RUN mkdir -p /toolchain/src/src/clang-format
+#RUN tar -xvf /toolchain/src/src/archives/llvm-17.0.6.src.tar.xz -C /toolchain/src/src/clang-format
+#ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/clang-17.0.6.src.tar.xz /toolchain/src/src/archives/
+#RUN tar -xvf /toolchain/src/src/archives/clang-17.0.6.src.tar.xz -C /toolchain/src/src/clang-format/llvm-17.0.6.src/tools/
+#RUN mv /toolchain/src/src/clang-format/llvm-17.0.6.src/tools/clang-17.0.6.src /toolchain/src/src/clang-format/llvm-17.0.6.src/tools/clang
+#ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/cmake-17.0.6.src.tar.xz /toolchain/src/src/archives/
+#RUN tar -xvf /toolchain/src/src/archives/cmake-17.0.6.src.tar.xz -C /toolchain/src/src/clang-format/
+#RUN mv /toolchain/src/src/clang-format/cmake-17.0.6.src /toolchain/src/src/clang-format/cmake
+#ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/third-party-17.0.6.src.tar.xz /toolchain/src/src/archives/
+#RUN tar -xvf /toolchain/src/src/archives/third-party-17.0.6.src.tar.xz -C /toolchain/src/src/clang-format/
+#RUN mv /toolchain/src/src/clang-format/third-party-17.0.6.src /toolchain/src/src/clang-format/third-party
 #ADD scripts/build-mac-flipper-tools.sh /toolchain/src/
 #RUN bash /toolchain/src/build-mac-flipper-tools.sh
 #ADD https://github.com/xpack-dev-tools/openocd-xpack/releases/download/v0.12.0-2/xpack-openocd-0.12.0-2-darwin-arm64.tar.gz /toolchain/src/src/archives/
@@ -74,22 +87,22 @@
 #RUN relink.sh /toolchain/mac-arm64-output-root
 
 FROM MacOSVenturaWithBrew AS flipperzero-toolchain-mac
-#RUN brew install coreutils bison
-#RUN brew link bison --force
-#COPY --from=flipperzero-toolchain-gdb /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
-#COPY --from=flipperzero-toolchain-gdb /toolchain/mac-arm64-output-root /toolchain/mac-arm64-output-root
-#COPY --from=flipperzero-toolchain-gcc /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
-#COPY --from=flipperzero-toolchain-gcc /toolchain/mac-arm64-output-root /toolchain/mac-arm64-output-root
-#COPY --from=flipperzero-toolchain-tools /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
-#COPY --from=flipperzero-toolchain-tools /toolchain/mac-arm64-output-root /toolchain/mac-arm64-output-root
-#ADD requirements.txt /toolchain/
-#RUN /toolchain/mac-x86_64-output-root/bin/python3 -m pip install --upgrade pip
-#RUN /toolchain/mac-x86_64-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt
-#RUN /toolchain/mac-arm64-output-root/bin/python3 -m pip install --upgrade pip
-#RUN /toolchain/mac-arm64-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt
-#ADD scripts/strip.sh /usr/bin/
-#ADD scripts/relink.sh /usr/bin/
-#RUN relink.sh /toolchain/mac-x86_64-output-root
-#RUN relink.sh /toolchain/mac-arm64-output-root
-#RUN strip.sh
+RUN brew install coreutils bison
+RUN brew link bison --force
+COPY --from=flipperzero-toolchain-gdb /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
+COPY --from=flipperzero-toolchain-gdb /toolchain/mac-arm64-output-root /toolchain/mac-arm64-output-root
+COPY --from=flipperzero-toolchain-gcc /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
+COPY --from=flipperzero-toolchain-gcc /toolchain/mac-arm64-output-root /toolchain/mac-arm64-output-root
+COPY --from=flipperzero-toolchain-tools /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
+COPY --from=flipperzero-toolchain-tools /toolchain/mac-arm64-output-root /toolchain/mac-arm64-output-root
+ADD requirements.txt /toolchain/
+RUN /toolchain/mac-x86_64-output-root/bin/python3 -m pip install --upgrade pip
+RUN /toolchain/mac-x86_64-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt
+RUN /toolchain/mac-arm64-output-root/bin/python3 -m pip install --upgrade pip
+RUN /toolchain/mac-arm64-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt
+ADD scripts/strip.sh /usr/bin/
+ADD scripts/relink.sh /usr/bin/
+RUN relink.sh /toolchain/mac-x86_64-output-root
+RUN relink.sh /toolchain/mac-arm64-output-root
+RUN strip.sh
 ADD scripts/bundle_upload.sh /usr/bin/

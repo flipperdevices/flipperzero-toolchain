@@ -24,14 +24,14 @@ function prepare_dir() {
 
 function make_bundle() {
 	pushd "$WINDOWS_OUTPUT_ROOT_BASE_DIR";
-	zip \
+	zip -r \
 		"$WINDOWS_OUTPUT_FILE" \
 		"$WINDOWS_TOOLCHAIN_DIR_NAME";
 	popd;
 }
 
 function upload_bundle() {
-    curl --fail -L -H "Token: $INDEXER_TOKEN" \
+    curl --fail --http1.1 -L -H "Token: $INDEXER_TOKEN" \
         -F "files=@$WINDOWS_OUTPUT_FILE" \
         "$INDEXER_URL"/toolchain/uploadfilesraw;
 }

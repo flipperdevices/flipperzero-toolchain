@@ -31,7 +31,7 @@ function make_bundle() {
 }
 
 function upload_bundle() {
-    curl --fail -L -H "Token: $INDEXER_TOKEN" \
+    curl --fail --http1.1 -L -H "Token: $INDEXER_TOKEN" \
         -F "files=@$LINUX_OUTPUT_FILE" \
         "$INDEXER_URL"/toolchain/uploadfilesraw;
 }

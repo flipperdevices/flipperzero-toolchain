@@ -47,12 +47,12 @@ function make_bundle_arm64() {
 }
 
 function upload_bundle_x86_64() {
-    curl --fail -L -H "Token: $INDEXER_TOKEN" \
+    curl --fail --http1.1 -L -H "Token: $INDEXER_TOKEN" \
         -F "files=@$MAC_X86_64_OUTPUT_FILE" \
         "$INDEXER_URL"/toolchain/uploadfilesraw;
 }
 function upload_bundle_arm64() {
-    curl --fail -L -H "Token: $INDEXER_TOKEN" \
+    curl --fail --http1.1 -L -H "Token: $INDEXER_TOKEN" \
         -F "files=@$MAC_ARM64_OUTPUT_FILE" \
         "$INDEXER_URL"/toolchain/uploadfilesraw;
 }
