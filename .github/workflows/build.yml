@@ -119,5 +119,5 @@ jobs:
               -e "TOOLCHAIN_VERSION=$IMAGE_TAG" \
               -e "INDEXER_URL=${{ secrets.INDEXER_URL }}" \
               -e "INDEXER_TOKEN=${{ secrets.INDEXER_TOKEN }}" \
-              flipperzero-toolchain-windows:${IMAGE_TAG} \
+              flipperzero-toolchain-mac:${IMAGE_TAG} \
               /usr/bin/bundle_upload.sh
