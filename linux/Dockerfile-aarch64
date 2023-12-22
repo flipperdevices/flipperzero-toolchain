@@ -48,18 +48,18 @@ ADD scripts/build-linux-gdb.sh /toolchain/src/
 RUN bash /toolchain/src/build-linux-gdb.sh
 
 FROM flipperzero-toolchain-linux-build-deps AS flipperzero-toolchain-linux-newlib-nano
-ADD https://developer.arm.com/-/media/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz /toolchain/src/src/archives
-RUN tar -xvf /toolchain/src/src/archives/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz -C /toolchain/src/src/
+ADD https://developer.arm.com/-/media/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-aarch64-arm-none-eabi.tar.xz /toolchain/src/src/archives
+RUN tar -xvf /toolchain/src/src/archives/arm-gnu-toolchain-12.2.rel1-aarch64-arm-none-eabi.tar.xz -C /toolchain/src/src/
 RUN rm -rf /usr/share/doc/gcc
-RUN cp -fr /toolchain/src/src/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/* /usr/
+RUN cp -fr /toolchain/src/src/arm-gnu-toolchain-12.2.rel1-aarch64-arm-none-eabi/* /usr/
 ADD scripts/build-linux-newlib.sh /toolchain/src/
 RUN bash /toolchain/src/build-linux-newlib.sh
 
 FROM flipperzero-toolchain-linux-build-deps AS flipperzero-toolchain-linux-gcc
-ADD https://developer.arm.com/-/media/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz /toolchain/src/src/archives
-RUN tar -xvf /toolchain/src/src/archives/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz -C /toolchain/src/src/
+ADD https://developer.arm.com/-/media/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-aarch64-arm-none-eabi.tar.xz /toolchain/src/src/archives
+RUN tar -xvf /toolchain/src/src/archives/arm-gnu-toolchain-12.2.rel1-aarch64-arm-none-eabi.tar.xz -C /toolchain/src/src/
 RUN rm -rf /usr/share/doc/gcc
-RUN cp -rf /toolchain/src/src/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/* /usr/
+RUN cp -rf /toolchain/src/src/arm-gnu-toolchain-12.2.rel1-aarch64-arm-none-eabi/* /usr/
 COPY --from=flipperzero-toolchain-linux-python /toolchain/linux-output-root /toolchain/linux-output-root
 COPY --from=flipperzero-toolchain-linux-newlib-nano /toolchain/newlib-root /toolchain/newlib-root
 COPY --from=flipperzero-toolchain-linux-newlib-nano /toolchain/newlib-nano-root /toolchain/newlib-nano-root
@@ -73,9 +73,9 @@ RUN relink.sh /toolchain/linux-output-root
 FROM flipperzero-toolchain-linux-build-deps AS flipperzero-toolchain-linux-tools
 RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install automake autoconf libtool python3 git
 
-ADD https://github.com/Kitware/CMake/releases/download/v3.28.0/cmake-3.28.0-linux-x86_64.tar.gz /toolchain/src/src/archives/
-RUN tar -xvf /toolchain/src/src/archives/cmake-3.28.0-linux-x86_64.tar.gz -C /tmp
-RUN rsync -azv /tmp/cmake-3.28.0-linux-x86_64/ /usr
+ADD https://github.com/Kitware/CMake/releases/download/v3.28.0/cmake-3.28.0-linux-aarch64.tar.gz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/cmake-3.28.0-linux-aarch64.tar.gz -C /tmp
+RUN rsync -azv /tmp/cmake-3.28.0-linux-aarch64/ /usr
 
 ADD https://github.com/protocolbuffers/protobuf/releases/download/v21.7/protobuf-cpp-3.21.7.tar.gz /toolchain/src/src/archives/
 RUN tar -xvf /toolchain/src/src/archives/protobuf-cpp-3.21.7.tar.gz -C /toolchain/src/src/
@@ -119,3 +119,5 @@ ADD scripts/strip.sh /usr/bin/
 RUN strip.sh /toolchain/linux-output-root
 ADD scripts/bundle_upload.sh /usr/bin/
 WORKDIR /toolchain
+
+# vim: set ft=dockerfile:

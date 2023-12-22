@@ -7,6 +7,7 @@ LINUX_OUTPUT_ROOT=/toolchain/linux-output-root
 LINUX_CONFIGURE_ROOT=/toolchain/linux-configure-root
 
 CPUS="$(grep -c processor /proc/cpuinfo )";
+ARCH="$(uname -m)";
 
 function build_gmp() {
     rm -rf "$LINUX_CONFIGURE_ROOT/gmp";
@@ -16,7 +17,7 @@ function build_gmp() {
         --disable-maintainer-mode \
         --prefix="$LINUX_BUILD_ROOT" \
         --disable-shared \
-        --host=x86_64-none-linux-gnu;
+        "--host=$ARCH-none-linux-gnu";
     make "-j$CPUS";
     make install;
     popd;

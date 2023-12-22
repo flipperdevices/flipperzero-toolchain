@@ -10,7 +10,7 @@ echo "Bundling toolchain version: $TOOLCHAIN_VERSION";
 
 LINUX_OUTPUT_ROOT=/toolchain/linux-output-root
 GCC_VERSION="12.3";
-ARCH="x86_64";
+ARCH="$(uname -m)";
 
 LINUX_OUTPUT_ROOT_BASE_DIR="$(dirname "$LINUX_OUTPUT_ROOT")";
 LINUX_TOOLCHAIN_DIR_NAME="gcc-arm-none-eabi-$GCC_VERSION-$ARCH-linux-flipper";
