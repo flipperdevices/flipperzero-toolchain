@@ -1,6 +1,8 @@
 FROM debian:11 as flipperzero-toolchain-windows-src
 ADD https://developer.arm.com/-/media/Files/downloads/gnu/12.3.rel1/srcrel/arm-gnu-toolchain-src-snapshot-12.3.rel1.tar.xz /toolchain/src/src/archives/
-RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install build-essential gcc-mingw-w64-x86-64 xz-utils g++-mingw-w64-x86-64 m4 bison flex texinfo file patchelf
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install build-essential xz-utils m4 bison flex texinfo file patchelf
+ADD https://github.com/xpack-dev-tools/mingw-w64-gcc-xpack/releases/download/v12.3.0-1/xpack-mingw-w64-gcc-12.3.0-1-linux-x64.tar.gz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/xpack-mingw-w64-gcc-12.3.0-1-linux-x64.tar.gz --strip-components=1 -C /usr/
 RUN tar -xvf /toolchain/src/src/archives/arm-gnu-toolchain-src-snapshot-12.3.rel1.tar.xz -C /toolchain/src/src/
 WORKDIR /toolchain/src/
 
@@ -13,6 +15,9 @@ ADD scripts/build-windows-binutils.sh /toolchain/src/
 RUN bash /toolchain/src/build-windows-binutils.sh
 
 FROM flipperzero-toolchain-windows-binutils AS flipperzero-toolchain-windows-gcc
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install git patch
+ADD patch/DEFINE-WIN32_LEAN_AND_MEAN.patch /toolchain/src/
+RUN cd /toolchain/src/src/arm-gnu-toolchain-src-snapshot-12.3.rel1 && git apply /toolchain/src/DEFINE-WIN32_LEAN_AND_MEAN.patch
 COPY --from=flipperzero-toolchain-linux /toolchain/linux-output-root/arm-none-eabi/lib /toolchain/windows-output-root/arm-none-eabi/lib
 COPY --from=flipperzero-toolchain-linux /toolchain/linux-output-root/arm-none-eabi/include /toolchain/windows-output-root/arm-none-eabi/include
 COPY --from=flipperzero-toolchain-linux /toolchain/linux-output-root/arm-none-eabi/include/c++ /toolchain/windows-output-root/arm-none-eabi/include/c++
