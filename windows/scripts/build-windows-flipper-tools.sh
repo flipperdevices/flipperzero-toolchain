@@ -15,18 +15,14 @@ function build_protobuf() {
     rm -rf "$WINDOWS_CONFIGURE_ROOT/protobuf";
     mkdir -p "$WINDOWS_CONFIGURE_ROOT/protobuf";
     pushd "$WINDOWS_CONFIGURE_ROOT/protobuf";
-    CC="x86_64-w64-mingw32-gcc" \
-        CXX="x86_64-w64-mingw32-g++" \
-        LDFLAGS="-static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -s" \
+    LDFLAGS="-Wl,-Bstatic,-lstdc++,-lpthread,-Bdynamic -s" \
         CXXFLAGS="-DNDEBUG" \
         /toolchain/src/src/protobuf/configure \
             "--prefix=$WINDOWS_OUTPUT_ROOT" \
             --host=x86_64-w64-mingw32 \
             --disable-shared \
-            LDFLAGS="-static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -s" \
-            CXXFLAGS="-DNDEBUG" \
-            CC="x86_64-w64-mingw32-gcc" \
-            CXX="x86_64-w64-mingw32-g++";
+            LDFLAGS="-Wl,-Bstatic,-lstdc++,-lpthread,-Bdynamic -s" \
+            CXXFLAGS="-DNDEBUG";
     make "-j$CPUS";
     make install;
     popd;
@@ -51,7 +47,7 @@ function build_clang_format() {
 	    -DCLANG_DEFAULT_UNWINDLIB=libunwind \
 	    -DCLANG_DEFAULT_CXX_STDLIB=libc++ \
 	    -DCLANG_DEFAULT_LINKER=lld \
-	    -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -s" \
+	    -DCMAKE_EXE_LINKER_FLAGS="-static -Wl,-Bstatic,-lstdc++,-lpthread,-Bdynamic -s" \
 	    -DCMAKE_CXX_FLAGS="-static";
     cmake \
         --build build \
