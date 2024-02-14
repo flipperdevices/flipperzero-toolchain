@@ -13,7 +13,6 @@ RUN bash /toolchain/src/build-windows-gcc-build-libs.sh
 FROM flipperzero-toolchain-windows-build-deps AS flipperzero-toolchain-windows-binutils
 ADD scripts/build-windows-binutils.sh /toolchain/src/
 RUN bash /toolchain/src/build-windows-binutils.sh
-RUN cp /usr/x86_64-w64-mingw32/lib/*.dll /toolchain/windows-output-root/bin/
 
 FROM flipperzero-toolchain-windows-binutils AS flipperzero-toolchain-windows-gcc
 RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install git patch
@@ -86,3 +85,5 @@ RUN wine /toolchain/windows-output-root/python/python.exe -m pip install -r /too
 ADD scripts/strip.sh /usr/bin/
 ADD scripts/bundle_upload.sh /usr/bin/
 RUN strip.sh
+COPY --from=flipperzero-toolchain-windows-src /usr/x86_64-w64-mingw32/lib /tmp/lib/
+RUN cp /tmp/lib/*.dll /toolchain/windows-output-root/bin/
