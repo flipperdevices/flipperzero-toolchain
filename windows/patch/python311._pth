@@ -1,2 +1,3 @@
-../python/Lib
-../python/DLLs
+..\python\Lib
+..\python\DLLs
+..\python\Lib\site-packages
