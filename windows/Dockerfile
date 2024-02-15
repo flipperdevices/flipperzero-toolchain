@@ -87,3 +87,5 @@ ADD scripts/bundle_upload.sh /usr/bin/
 RUN strip.sh
 COPY --from=flipperzero-toolchain-windows-src /usr/x86_64-w64-mingw32/lib /tmp/lib/
 RUN cp /tmp/lib/*.dll /toolchain/windows-output-root/bin/
+RUN cp /toolchain/windows-output-root/python/python311.dll /toolchain/windows-output-root/bin/
+ADD patch/python311._pth /toolchain/windows-output-root/bin/

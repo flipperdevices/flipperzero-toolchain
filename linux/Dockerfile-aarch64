@@ -94,8 +94,8 @@ ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/third-
 RUN tar -xvf /toolchain/src/src/archives/third-party-17.0.6.src.tar.xz -C /toolchain/src/src/clang-format/
 RUN mv /toolchain/src/src/clang-format/third-party-17.0.6.src /toolchain/src/src/clang-format/third-party
 
-ADD https://github.com/xpack-dev-tools/openocd-xpack/releases/download/v0.12.0-2/xpack-openocd-0.12.0-2-linux-x64.tar.gz /toolchain/src/src/archives/
-RUN tar -xvf /toolchain/src/src/archives/xpack-openocd-0.12.0-2-linux-x64.tar.gz -C /tmp
+ADD https://github.com/xpack-dev-tools/openocd-xpack/releases/download/v0.12.0-2/xpack-openocd-0.12.0-2-linux-arm64.tar.gz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/xpack-openocd-0.12.0-2-linux-arm64.tar.gz -C /tmp
 RUN rm -rf /tmp/xpack-openocd-0.12.0-2/README.md
 RUN rm -rf /tmp/xpack-openocd-0.12.0-2/distro-info
 RUN rsync -azv /tmp/xpack-openocd-0.12.0-2/ /toolchain/linux-output-root
