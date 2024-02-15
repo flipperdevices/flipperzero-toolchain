@@ -45,7 +45,7 @@ jobs:
               /usr/bin/bundle_upload.sh
 
   build-linux-aarch64:
-    runs-on: [self-hosted, macOS, X64, FlipperZeroToolchain]
+    runs-on: [self-hosted, macOS, ARM64, FlipperZeroToolchain]
     steps:
       - name: 'Wipe workspace'
         run: find ./ -mount -maxdepth 1 -exec rm -rf {} \;
@@ -123,7 +123,7 @@ jobs:
               /usr/bin/bundle_upload.sh
 
   build-mac:
-    runs-on: [self-hosted, macOS, X64, FlipperZeroToolchainChmocker]
+    runs-on: [self-hosted, macOS, ARM64, FlipperZeroToolchainChmocker]
     steps:
       - name: 'Wipe workspace'
         run: find ./ -mount -maxdepth 1 -exec rm -rf {} \;
