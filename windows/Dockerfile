@@ -36,6 +36,8 @@ ADD scripts/unpack-windows-python-wine.sh /toolchain/src/
 RUN bash /toolchain/src/unpack-windows-python-wine.sh
 
 FROM flipperzero-toolchain-windows-binutils AS flipperzero-toolchain-windows-gdb
+ADD https://ftp.gnu.org/gnu/gdb/gdb-13.2.tar.gz /toolchain/src/src/archives
+RUN tar -xvf /toolchain/src/src/archives/gdb-13.2.tar.gz -C /toolchain/src/src/
 COPY --from=flipperzero-toolchain-windows-python /toolchain/windows-output-root/python /toolchain/windows-output-root/python
 ADD scripts/python3-config-windows-x86_64.sh /toolchain/src/
 ADD scripts/build-windows-gdb.sh /toolchain/src/

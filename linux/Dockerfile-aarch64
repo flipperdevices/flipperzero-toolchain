@@ -41,9 +41,11 @@ ADD scripts/build-linux-binutils.sh /toolchain/src/
 RUN bash /toolchain/src/build-linux-binutils.sh
 
 FROM flipperzero-toolchain-linux-build-deps AS flipperzero-toolchain-linux-gdb
+ADD https://ftp.gnu.org/gnu/gdb/gdb-13.2.tar.gz /toolchain/src/src/archives
+RUN tar -xvf /toolchain/src/src/archives/gdb-13.2.tar.gz -C /toolchain/src/src/
 COPY --from=flipperzero-toolchain-linux-python /toolchain/linux-output-root /toolchain/linux-output-root
 ADD scripts/relink.sh /usr/bin/
-ADD patch/gdb_curses.h /toolchain/src/src/binutils-gdb/gdb/
+ADD patch/gdb_curses.h /toolchain/src/src/gdb-13.2/gdb/
 ADD scripts/build-linux-gdb.sh /toolchain/src/
 RUN bash /toolchain/src/build-linux-gdb.sh
 

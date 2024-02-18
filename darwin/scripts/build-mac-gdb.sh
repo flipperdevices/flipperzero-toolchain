@@ -21,7 +21,7 @@ function build_gdb_x86_64() {
         CFLAGS="$MAC_X86_64_FLAGS" \
         LDFLAGS="$MAC_X86_64_FLAGS" \
         DYLD_LIBRARY_PATH="$MAC_X86_64_OUTPUT_ROOT/lib" \
-        /toolchain/src/src/binutils-gdb/configure \
+        "/toolchain/src/src/gdb-13.2/configure" \
             --enable-initfini-array \
             --disable-werror \
             --enable-tui \
@@ -80,7 +80,7 @@ function build_gdb_arm64() {
         CFLAGS="$MAC_ARM64_FLAGS" \
         LDFLAGS="$MAC_ARM64_FLAGS" \
         DYLD_LIBRARY_PATH="$MAC_ARM64_OUTPUT_ROOT/lib" \
-        /toolchain/src/src/binutils-gdb/configure \
+        "/toolchain/src/src/gdb-13.2/configure" \
             --enable-initfini-array \
             --disable-werror \
             --enable-tui \
@@ -138,7 +138,7 @@ function build_gdb_py_x86_64() {
         CFLAGS="$MAC_X86_64_FLAGS" \
         LDFLAGS="$MAC_X86_64_FLAGS" \
         DYLD_LIBRARY_PATH="$MAC_X86_64_OUTPUT_ROOT/lib" \
-        /toolchain/src/src/binutils-gdb/configure \
+        "/toolchain/src/src/gdb-13.2/configure" \
             --enable-initfini-array \
             --disable-werror \
             --enable-tui \
@@ -199,7 +199,7 @@ function build_gdb_py_arm64() {
         CFLAGS="$MAC_ARM64_FLAGS" \
         LDFLAGS="$MAC_ARM64_FLAGS" \
         DYLD_LIBRARY_PATH="$MAC_ARM64_OUTPUT_ROOT/lib" \
-        /toolchain/src/src/binutils-gdb/configure \
+        "/toolchain/src/src/gdb-13.2/configure" \
             --enable-initfini-array \
             --disable-werror \
             --enable-tui \

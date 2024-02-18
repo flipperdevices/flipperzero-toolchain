@@ -26,6 +26,8 @@ RUN relink.sh /toolchain/mac-x86_64-output-root
 RUN relink.sh /toolchain/mac-arm64-output-root
 
 FROM flipperzero-toolchain-binutils AS flipperzero-toolchain-gdb
+ADD https://ftp.gnu.org/gnu/gdb/gdb-13.2.tar.gz /toolchain/src/src/archives
+RUN tar -xvf /toolchain/src/src/archives/gdb-13.2.tar.gz -C /toolchain/src/src/
 COPY --from=flipperzero-toolchain-python /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
 COPY --from=flipperzero-toolchain-python /toolchain/mac-arm64-output-root /toolchain/mac-arm64-output-root
 ADD scripts/build-mac-gdb.sh /toolchain/src/

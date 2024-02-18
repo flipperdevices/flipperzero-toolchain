@@ -23,7 +23,7 @@ function build_linux_gdb() {
     rm -rf "$LINUX_CONFIGURE_ROOT/gdb";
     mkdir -p "$LINUX_CONFIGURE_ROOT/gdb";
     pushd "$LINUX_CONFIGURE_ROOT/gdb";
-    LDFLAGS="-L$LINUX_BUILD_ROOT/lib -L$LINUX_OUTPUT_ROOT/lib" CPPFLAGS="-I$LINUX_BUILD_ROOT/include -I$LINUX_OUTPUT_ROOT/include -I$LINUX_OUTPUT_ROOT/include/readline" LD_LIBRARY_PATH="LINUX_OUTPUT_ROOT/lib" /toolchain/src/src/binutils-gdb/configure \
+    LDFLAGS="-L$LINUX_BUILD_ROOT/lib -L$LINUX_OUTPUT_ROOT/lib" CPPFLAGS="-I$LINUX_BUILD_ROOT/include -I$LINUX_OUTPUT_ROOT/include -I$LINUX_OUTPUT_ROOT/include/readline" LD_LIBRARY_PATH="LINUX_OUTPUT_ROOT/lib" "/toolchain/src/src/gdb-13.2/configure" \
         --enable-initfini-array \
         --enable-tui \
         --disable-nls \
@@ -69,7 +69,7 @@ function build_linux_gdb_py() {
     rm -rf "$LINUX_CONFIGURE_ROOT/gdb-py";
     mkdir -p "$LINUX_CONFIGURE_ROOT/gdb-py";
     pushd "$LINUX_CONFIGURE_ROOT/gdb-py";
-    LDFLAGS="-L$LINUX_BUILD_ROOT/lib -L$LINUX_OUTPUT_ROOT/lib" CPPFLAGS="-I$LINUX_BUILD_ROOT/include -I$LINUX_OUTPUT_ROOT/include -I$LINUX_OUTPUT_ROOT/include/readline" LD_LIBRARY_PATH="LINUX_OUTPUT_ROOT/lib" /toolchain/src/src/binutils-gdb/configure \
+    LDFLAGS="-L$LINUX_BUILD_ROOT/lib -L$LINUX_OUTPUT_ROOT/lib" CPPFLAGS="-I$LINUX_BUILD_ROOT/include -I$LINUX_OUTPUT_ROOT/include -I$LINUX_OUTPUT_ROOT/include/readline" LD_LIBRARY_PATH="LINUX_OUTPUT_ROOT/lib" "/toolchain/src/src/gdb-13.2/configure" \
         --enable-initfini-array \
         --enable-tui \
         --disable-nls \

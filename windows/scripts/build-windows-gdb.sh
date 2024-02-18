@@ -12,7 +12,7 @@ build_windows_gdb() {
     rm -rf "$WINDOWS_CONFIGURE_ROOT/gdb";
     mkdir -p "$WINDOWS_CONFIGURE_ROOT/gdb";
     pushd "$WINDOWS_CONFIGURE_ROOT/gdb";
-    LDFLAGS="-L$WINDOWS_BUILD_ROOT/lib -L$WINDOWS_OUTPUT_ROOT/lib" CPPFLAGS="-I$WINDOWS_BUILD_ROOT/include -I$WINDOWS_OUTPUT_ROOT/include -I$WINDOWS_OUTPUT_ROOT/include/readline" "/toolchain/src/src/binutils-gdb/configure" \
+    LDFLAGS="-L$WINDOWS_BUILD_ROOT/lib -L$WINDOWS_OUTPUT_ROOT/lib" CPPFLAGS="-I$WINDOWS_BUILD_ROOT/include -I$WINDOWS_OUTPUT_ROOT/include -I$WINDOWS_OUTPUT_ROOT/include/readline" "/toolchain/src/src/gdb-13.2/configure" \
         --host=x86_64-w64-mingw32 \
         --target=arm-none-eabi \
         --enable-initfini-array \
@@ -60,7 +60,7 @@ build_windows_gdb_py() {
     rm -rf "$WINDOWS_CONFIGURE_ROOT/gdb-py";
     mkdir -p "$WINDOWS_CONFIGURE_ROOT/gdb-py";
     pushd "$WINDOWS_CONFIGURE_ROOT/gdb-py";
-    LDFLAGS="-L$WINDOWS_BUILD_ROOT/lib -L$WINDOWS_OUTPUT_ROOT/lib" CPPFLAGS="-I$WINDOWS_BUILD_ROOT/include -I$WINDOWS_OUTPUT_ROOT/include -I$WINDOWS_OUTPUT_ROOT/include/readline" "/toolchain/src/src/binutils-gdb/configure" \
+    LDFLAGS="-L$WINDOWS_BUILD_ROOT/lib -L$WINDOWS_OUTPUT_ROOT/lib" CPPFLAGS="-I$WINDOWS_BUILD_ROOT/include -I$WINDOWS_OUTPUT_ROOT/include -I$WINDOWS_OUTPUT_ROOT/include/readline" "/toolchain/src/src/gdb-13.2/configure" \
         --host=x86_64-w64-mingw32 \
         --target=arm-none-eabi \
         --enable-initfini-array \
