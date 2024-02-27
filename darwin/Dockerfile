@@ -107,3 +107,5 @@ RUN relink.sh /toolchain/mac-x86_64-output-root
 RUN relink.sh /toolchain/mac-arm64-output-root
 RUN strip.sh
 ADD scripts/bundle_upload.sh /usr/bin/
+ADD scripts/fix_python_scripts_shebang.sh /usr/bin/
+RUN fix_python_scripts_shebang.sh

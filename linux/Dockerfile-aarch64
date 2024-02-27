@@ -120,6 +120,8 @@ RUN relink.sh /toolchain/linux-output-root
 ADD scripts/strip.sh /usr/bin/
 RUN strip.sh /toolchain/linux-output-root
 ADD scripts/bundle_upload.sh /usr/bin/
+ADD scripts/fix_python_scripts_shebang.sh /usr/bin/
+RUN fix_python_scripts_shebang.sh
 WORKDIR /toolchain
 
 # vim: set ft=dockerfile:

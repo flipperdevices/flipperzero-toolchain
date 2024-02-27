@@ -113,13 +113,15 @@ COPY --from=flipperzero-toolchain-linux-gcc /toolchain/linux-output-root /toolch
 COPY --from=flipperzero-toolchain-linux-tools /toolchain/linux-output-root /toolchain/linux-output-root
 RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install build-essential file patchelf curl
 ADD requirements.txt /toolchain/requirements.txt
-RUN /toolchain/linux-output-root/bin/python3 -m pip install --upgrade pip
-RUN /toolchain/linux-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt
+RUN PATH="/toolchain/linux-output-root/bin/:$PATH"/usr/bin/env python3 -m pip install --upgrade pip
+RUN PATH="/toolchain/linux-output-root/bin/:$PATH"/usr/bin/env python3 -m pip install -r /toolchain/requirements.txt
 ADD scripts/relink.sh /usr/bin/
 RUN relink.sh /toolchain/linux-output-root
 ADD scripts/strip.sh /usr/bin/
 RUN strip.sh /toolchain/linux-output-root
 ADD scripts/bundle_upload.sh /usr/bin/
+ADD scripts/fix_python_scripts_shebang.sh /usr/bin/
+RUN fix_python_scripts_shebang.sh
 WORKDIR /toolchain
 
 # vim: set ft=dockerfile:
