@@ -19,7 +19,7 @@ function check_library() {
     LIB_CURRENT_FULL_PATH="$1";
     OBJECT="$2";
     # excluding paths
-    if grep -qE "^@" <<< "$LIB_CURRENT_FULL_PATH"; then
+    if grep -qE "^@loader_path" <<< "$LIB_CURRENT_FULL_PATH"; then
         return 0;
     fi
     # bazel-out - is a prefix to protobuf shared libaries id, id name isn't match lib name, there is no way to catch it

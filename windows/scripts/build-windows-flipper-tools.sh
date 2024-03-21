@@ -143,8 +143,8 @@ function cleanup() {
     find "$WINDOWS_OUTPUT_ROOT" \( -name "*.a" -or -name "*.la" \) -delete;
 }
 
-#build_protobuf;
-#build_clang_format;
+build_protobuf;
+build_clang_format;
 build_libusb;
 build_hidapi;
 build_openocd;

@@ -53,7 +53,7 @@ RUN bash /toolchain/src/build-mac-gcc.sh
 RUN bash /toolchain/src/move_newlib_to_nano.sh
 
 FROM flipperzero-toolchain-binutils AS flipperzero-toolchain-tools
-RUN brew install cmake automake autoconf
+RUN brew install cmake automake autoconf libtool pkg-config
 ADD https://github.com/protocolbuffers/protobuf/releases/download/v21.7/protobuf-cpp-3.21.7.tar.gz /toolchain/src/src/archives/
 RUN tar -xvf /toolchain/src/src/archives/protobuf-cpp-3.21.7.tar.gz -C /toolchain/src/src/
 RUN mv /toolchain/src/src/protobuf-3.21.7 /toolchain/src/src/protobuf
@@ -69,20 +69,15 @@ RUN mv /toolchain/src/src/clang-format/cmake-17.0.6.src /toolchain/src/src/clang
 ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/third-party-17.0.6.src.tar.xz /toolchain/src/src/archives/
 RUN tar -xvf /toolchain/src/src/archives/third-party-17.0.6.src.tar.xz -C /toolchain/src/src/clang-format/
 RUN mv /toolchain/src/src/clang-format/third-party-17.0.6.src /toolchain/src/src/clang-format/third-party
+ADD https://github.com/libusb/libusb/releases/download/v1.0.24/libusb-1.0.24.tar.bz2 /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/libusb-1.0.24.tar.bz2 -C /toolchain/src/src/
+RUN mv /toolchain/src/src/libusb-1.0.24 /toolchain/src/src/libusb
+ADD https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.14.0.tar.gz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/hidapi-0.14.0.tar.gz -C /toolchain/src/src/
+RUN mv /toolchain/src/src/hidapi-hidapi-0.14.0 /toolchain/src/src/hidapi
+RUN git clone https://github.com/flipperdevices/openocd.git /toolchain/src/src/openocd
 ADD scripts/build-mac-flipper-tools.sh /toolchain/src/
 RUN bash /toolchain/src/build-mac-flipper-tools.sh
-ADD https://github.com/xpack-dev-tools/openocd-xpack/releases/download/v0.12.0-2/xpack-openocd-0.12.0-2-darwin-arm64.tar.gz /toolchain/src/src/archives/
-ADD https://github.com/xpack-dev-tools/openocd-xpack/releases/download/v0.12.0-2/xpack-openocd-0.12.0-2-darwin-x64.tar.gz /toolchain/src/src/archives/
-RUN tar -xvf /toolchain/src/src/archives/xpack-openocd-0.12.0-2-darwin-arm64.tar.gz -C /toolchain/src/src/
-RUN mv /toolchain/src/src/xpack-openocd-0.12.0-2 /toolchain/src/src/xpack-openocd-0.12.0-2-arm64
-RUN tar -xvf /toolchain/src/src/archives/xpack-openocd-0.12.0-2-darwin-x64.tar.gz -C /toolchain/src/src/
-RUN mv /toolchain/src/src/xpack-openocd-0.12.0-2 /toolchain/src/src/xpack-openocd-0.12.0-2-x86_64
-RUN rm -rf /toolchain/src/src/xpack-openocd-0.12.0-2-arm64/distro-info
-RUN rm -rf /toolchain/src/src/xpack-openocd-0.12.0-2-x86_64/distro-info
-RUN rm -rf /toolchain/src/src/xpack-openocd-0.12.0-2-arm64/README.md
-RUN rm -rf /toolchain/src/src/xpack-openocd-0.12.0-2-x86_64/README.md
-RUN rsync -av /toolchain/src/src/xpack-openocd-0.12.0-2-arm64/ /toolchain/mac-arm64-output-root
-RUN rsync -av /toolchain/src/src/xpack-openocd-0.12.0-2-x86_64/ /toolchain/mac-x86_64-output-root
 ADD scripts/relink.sh /usr/bin/
 RUN relink.sh /toolchain/mac-x86_64-output-root
 RUN relink.sh /toolchain/mac-arm64-output-root
