@@ -21,7 +21,7 @@ function cleanup_relink() {
 
 function copy_libudev() {
     mkdir -p "$LINUX_OUTPUT_ROOT/lib";
-    cp -r /usr/lib/x86_64-linux-gnu/libudev.so.1* "$LINUX_OUTPUT_ROOT/lib/";
+    cp -r /usr/lib/$ARCH-linux-gnu/libudev.so.1* "$LINUX_OUTPUT_ROOT/lib/";
 }
 
 function build_protobuf() {
