@@ -76,7 +76,7 @@ function build_hidapi() {
     pushd "$LINUX_CONFIGURE_ROOT/hidapi";
     cmake \
         -S "/toolchain/src/src/hidapi" \
-        "-DCMAKE_INSTALL_PREFIX=/toolchain/linux-output-root";
+        "-DCMAKE_INSTALL_PREFIX=$LINUX_OUTPUT_ROOT";
     make "-j$CPUS";
     make install;
     popd;

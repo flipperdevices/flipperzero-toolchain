@@ -44,7 +44,7 @@ ADD scripts/build-windows-gdb.sh /toolchain/src/
 RUN bash /toolchain/src/build-windows-gdb.sh
 
 FROM flipperzero-toolchain-windows-build-deps AS flipperzero-toolchain-windows-tools
-RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install rsync git python3 unzip automake autoconf libtool
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt -y install rsync git python3 unzip automake autoconf libtool pkg-config
 ADD https://github.com/Kitware/CMake/releases/download/v3.28.0/cmake-3.28.0-linux-x86_64.tar.gz /toolchain/src/src/archives/
 RUN tar -xvf /toolchain/src/src/archives/cmake-3.28.0-linux-x86_64.tar.gz -C /tmp
 RUN rsync -azv /tmp/cmake-3.28.0-linux-x86_64/ /usr
@@ -63,11 +63,17 @@ RUN mv /toolchain/src/src/clang-format/cmake-17.0.6.src /toolchain/src/src/clang
 ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/third-party-17.0.6.src.tar.xz /toolchain/src/src/archives/
 RUN tar -xvf /toolchain/src/src/archives/third-party-17.0.6.src.tar.xz -C /toolchain/src/src/clang-format/
 RUN mv /toolchain/src/src/clang-format/third-party-17.0.6.src /toolchain/src/src/clang-format/third-party
-ADD https://github.com/xpack-dev-tools/openocd-xpack/releases/download/v0.12.0-2/xpack-openocd-0.12.0-2-win32-x64.zip /toolchain/src/src/archives/
-RUN unzip /toolchain/src/src/archives/xpack-openocd-0.12.0-2-win32-x64.zip -d /tmp
-RUN rm -rf /tmp/xpack-openocd-0.12.0-2/README.md
-RUN rm -rf /tmp/xpack-openocd-0.12.0-2/distro-info
-RUN rsync -azv /tmp/xpack-openocd-0.12.0-2/ /toolchain/windows-output-root
+
+ADD https://github.com/libusb/libusb/releases/download/v1.0.24/libusb-1.0.24.tar.bz2 /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/libusb-1.0.24.tar.bz2 -C /toolchain/src/src/
+RUN mv /toolchain/src/src/libusb-1.0.24 /toolchain/src/src/libusb
+
+ADD https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.14.0.tar.gz /toolchain/src/src/archives/
+RUN tar -xvf /toolchain/src/src/archives/hidapi-0.14.0.tar.gz -C /toolchain/src/src/
+RUN mv /toolchain/src/src/hidapi-hidapi-0.14.0 /toolchain/src/src/hidapi
+
+RUN git clone https://github.com/flipperdevices/openocd.git /toolchain/src/src/openocd
+
 ADD scripts/build-windows-flipper-tools.sh /toolchain/src/
 RUN bash /toolchain/src/build-windows-flipper-tools.sh
 
