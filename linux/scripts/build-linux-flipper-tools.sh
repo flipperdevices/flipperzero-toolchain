@@ -148,9 +148,9 @@ function build_doxygen() {
         -DCMAKE_BUILD_TYPE=Release \
         -G "Unix Makefiles";
 
-    cmake --build build;
+    cmake --build build --parallel $(nproc);
     mkdir -p "$LINUX_OUTPUT_ROOT/bin/"
-    cp "$LINUX_CONFIGURE_ROOT/doxygen/build/bin/doxygen" "$LINUX_OUTPUT_ROOT/bin/"
+    strip --strip-all "$LINUX_CONFIGURE_ROOT/doxygen/build/bin/doxygen" -o "$LINUX_OUTPUT_ROOT/bin/doxygen"
 
     popd;
 }
