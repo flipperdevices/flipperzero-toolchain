@@ -138,6 +138,24 @@ function build_openocd() {
     cleanup_relink "$LINUX_OUTPUT_ROOT";
 }
 
+function build_doxygen() {
+    rm -rf "$LINUX_CONFIGURE_ROOT/doxygen";
+    mkdir -p "$LINUX_CONFIGURE_ROOT/doxygen";
+    pushd "$LINUX_CONFIGURE_ROOT/doxygen";
+    cmake -S \
+        /toolchain/src/src/doxygen \
+        -B build \
+        -DCMAKE_BUILD_TYPE=Release \
+        -G "Unix Makefiles";
+
+    cmake --build build;
+    mkdir -p "$LINUX_OUTPUT_ROOT/bin/"
+    cp "$LINUX_CONFIGURE_ROOT/doxygen/build/bin/doxygen" "$LINUX_OUTPUT_ROOT/bin/"
+
+    popd;
+}
+
+build_doxygen;
 build_protobuf;
 build_llvm;
 copy_libudev;

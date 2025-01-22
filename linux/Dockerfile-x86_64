@@ -109,6 +109,10 @@ RUN mv /toolchain/src/src/hidapi-hidapi-0.14.0 /toolchain/src/src/hidapi
 
 RUN bash -c "git clone https://github.com/flipperdevices/openocd.git /toolchain/src/src/openocd && cd /toolchain/src/src/openocd && git reset --hard 2c984ce7ce8e0c88894d9e40924fe9bcc052878e"
 
+ADD https://github.com/doxygen/doxygen/releases/download/Release_1_13_2/doxygen-1.13.2.src.tar.gz /toolchain/src/src/archives/
+RUN tar -xzf /toolchain/src/src/archives/doxygen-1.13.2.src.tar.gz -C /toolchain/src/src/
+RUN mv /toolchain/src/src/doxygen-1.13.2 /toolchain/src/src/doxygen
+
 ADD scripts/relink.sh /usr/bin/
 ADD scripts/build-linux-flipper-tools.sh /toolchain/src/
 RUN bash /toolchain/src/build-linux-flipper-tools.sh
