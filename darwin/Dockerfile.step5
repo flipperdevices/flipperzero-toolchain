@@ -1,0 +1,3 @@
+FROM flipperzero-toolchain-gcc-first AS flipperzero-toolchain-newlib
+ADD scripts/build-mac-newlib.sh /toolchain/src/
+RUN bash /toolchain/src/build-mac-newlib.sh

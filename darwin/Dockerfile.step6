@@ -1,0 +1,5 @@
+FROM flipperzero-toolchain-newlib AS flipperzero-toolchain-gcc
+ADD scripts/build-mac-gcc.sh /toolchain/src/
+ADD scripts/move_newlib_to_nano.sh /toolchain/src/
+RUN bash /toolchain/src/build-mac-gcc.sh
+RUN bash /toolchain/src/move_newlib_to_nano.sh

@@ -1,0 +1,22 @@
+FROM MacOSVenturaWithBrew AS flipperzero-toolchain-mac
+RUN brew install coreutils bison
+RUN brew link bison --force
+COPY --from=flipperzero-toolchain-gdb /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
+COPY --from=flipperzero-toolchain-gdb /toolchain/mac-arm64-output-root /toolchain/mac-arm64-output-root
+COPY --from=flipperzero-toolchain-gcc /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
+COPY --from=flipperzero-toolchain-gcc /toolchain/mac-arm64-output-root /toolchain/mac-arm64-output-root
+COPY --from=flipperzero-toolchain-tools /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
+COPY --from=flipperzero-toolchain-tools /toolchain/mac-arm64-output-root /toolchain/mac-arm64-output-root
+ADD requirements.txt /toolchain/
+RUN /toolchain/mac-x86_64-output-root/bin/python3 -m pip install --upgrade pip
+RUN /toolchain/mac-x86_64-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt
+RUN /toolchain/mac-arm64-output-root/bin/python3 -m pip install --upgrade pip
+RUN /toolchain/mac-arm64-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt
+ADD scripts/strip.sh /usr/bin/
+ADD scripts/relink.sh /usr/bin/
+RUN relink.sh /toolchain/mac-x86_64-output-root
+RUN relink.sh /toolchain/mac-arm64-output-root
+RUN strip.sh
+ADD scripts/bundle_upload.sh /usr/bin/
+ADD scripts/fix_python_scripts_shebang.sh /usr/bin/
+RUN fix_python_scripts_shebang.sh

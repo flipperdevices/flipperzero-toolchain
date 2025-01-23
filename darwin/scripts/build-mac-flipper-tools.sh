@@ -388,6 +388,24 @@ function build_openocd_arm64() {
     popd;
 }
 
+function build_doxygen() {
+    rm -rf "$MAC_ARM64_CONFIGURE_ROOT/doxygen";
+    mkdir -p "$MAC_ARM64_CONFIGURE_ROOT/doxygen";
+    pushd "$MAC_ARM64_CONFIGURE_ROOT/doxygen";
+    cmake -S \
+        /toolchain/src/src/doxygen \
+        -B build \
+        -DCMAKE_BUILD_TYPE=Release \
+        -G "Unix Makefiles";
+
+    cmake --build build --parallel $(nproc);
+    mkdir -p "$MAC_ARM64_OUTPUT_ROOT/bin/"
+    strip --strip-all "$MAC_ARM64_CONFIGURE_ROOT/doxygen/build/bin/doxygen" -o "$MAC_ARM64_OUTPUT_ROOT/bin/doxygen"
+
+    popd;
+}
+
+build_doxygen;
 build_protobuf_x86_64;
 build_protobuf_arm64;
 build_llvm_x86_64;
