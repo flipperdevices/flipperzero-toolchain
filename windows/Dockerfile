@@ -77,6 +77,13 @@ RUN mv /toolchain/src/src/hidapi-hidapi-0.14.0 /toolchain/src/src/hidapi
 
 RUN bash -c "git clone https://github.com/flipperdevices/openocd.git /toolchain/src/src/openocd && cd /toolchain/src/src/openocd && git reset --hard 2c984ce7ce8e0c88894d9e40924fe9bcc052878e"
 
+ADD https://github.com/doxygen/doxygen/releases/download/Release_1_12_0/doxygen-1.12.0.src.tar.gz /toolchain/src/src/archives/
+RUN tar -xzf /toolchain/src/src/archives/doxygen-1.12.0.src.tar.gz -C /toolchain/src/src/
+RUN mv /toolchain/src/src/doxygen-1.12.0 /toolchain/src/src/doxygen
+
+ADD https://github.com/pffang/libiconv-for-Windows/releases/download/1.18/libiconv-for-Windows_prebuilt.zip /toolchain/src/src/archives/
+RUN unzip /toolchain/src/src/archives/libiconv-for-Windows_prebuilt.zip -d /toolchain/src/src/libiconv_winbuild/
+
 ADD scripts/build-windows-flipper-tools.sh /toolchain/src/
 RUN bash /toolchain/src/build-windows-flipper-tools.sh
 
