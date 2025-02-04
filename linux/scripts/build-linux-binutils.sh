@@ -2,11 +2,7 @@
 
 set -euo pipefail;
 
-LINUX_BUILD_ROOT=/toolchain/linux-build-root
-LINUX_OUTPUT_ROOT=/toolchain/linux-output-root
-LINUX_CONFIGURE_ROOT=/toolchain/linux-configure-root
-
-CPUS="$(grep -c processor /proc/cpuinfo )";
+. /toolchain/src/buildvars.sh
 
 function build_binutils() {
     rm -rf "$LINUX_CONFIGURE_ROOT/binutils";
@@ -29,4 +25,5 @@ function build_binutils() {
     make install;
     popd;
 }
+
 build_binutils;

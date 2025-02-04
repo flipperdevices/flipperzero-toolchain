@@ -1,0 +1,22 @@
+FROM flipperzero-toolchain-mac-binutils AS flipperzero-toolchain-mac-llvm
+
+ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/llvm-18.1.8.src.tar.xz /toolchain/src/archives/
+ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/clang-18.1.8.src.tar.xz /toolchain/src/archives/
+ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/cmake-18.1.8.src.tar.xz /toolchain/src/archives/
+ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/third-party-18.1.8.src.tar.xz /toolchain/src/archives/
+ADD https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/clang-tools-extra-18.1.8.src.tar.xz /toolchain/src/archives/
+
+#
+# Unpack all & remove archives
+#
+RUN /bin/zsh -c "mkdir -p /toolchain/src/src/llvm/{cmake,third-party,llvm-18.1.8.src/tools/clang/tools/extra} \
+    && cd /toolchain/src/archives/ \
+    && tar -xf llvm-18.1.8.src.tar.xz -C /toolchain/src/src/llvm \
+    && tar --strip-component=1 -xf clang-18.1.8.src.tar.xz -C /toolchain/src/src/llvm/llvm-18.1.8.src/tools/clang \
+    && tar --strip-component=1 -xf cmake-18.1.8.src.tar.xz -C /toolchain/src/src/llvm/cmake \
+    && tar --strip-component=1 -xf third-party-18.1.8.src.tar.xz -C /toolchain/src/src/llvm/third-party \
+    && tar --strip-component=1 -xf clang-tools-extra-18.1.8.src.tar.xz -C /toolchain/src/src/llvm/llvm-18.1.8.src/tools/clang/tools/extra"
+
+RUN /bin/zsh /toolchain/src/build-mac-llvm.sh
+RUN /bin/zsh -c "relink.sh /toolchain/mac-x86_64-output-root"
+RUN /bin/zsh -c "relink.sh /toolchain/mac-arm64-output-root"

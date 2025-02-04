@@ -1,0 +1,21 @@
+##
+##  flipperzero-toolchain-windows-python-build-libs
+##  flipperzero-toolchain-windows-python
+##
+FROM flipperzero-toolchain-windows-build-base AS flipperzero-toolchain-windows-python-with-gdb
+
+ADD "https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe" .
+ADD "https://ftp.gnu.org/gnu/gdb/gdb-13.2.tar.gz" .
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN . /toolchain/src/buildvars.sh \
+    && cmd dpkg --add-architecture i386 \
+    && cmd apt -y update \
+    && cmd apt -y install xvfb wine wine32 wine64 unzip \
+    && cmd /toolchain/src/unpack-windows-python-wine.sh \
+&& echo "[#] gdb section..." \
+    && cmd tar -xf gdb-13.2.tar.gz -C /toolchain/src/src/ \
+    && cmd /toolchain/src/build-windows-gdb.sh \
+    && cmd find /toolchain/src/archives/ -type f -delete \
+    && cleanup_after_build

@@ -2,26 +2,13 @@
 
 set -euo pipefail;
 
-LINUX_BUILD_ROOT=/toolchain/linux-build-root
-LINUX_OUTPUT_ROOT=/toolchain/linux-output-root
-LINUX_CONFIGURE_ROOT=/toolchain/linux-configure-root
-
-CPUS="$(grep -c processor /proc/cpuinfo )";
-ARCH="$(uname -m)";
+. /toolchain/src/buildvars.sh
 
 export PKG_CONFIG_PATH="$LINUX_OUTPUT_ROOT/lib/pkgconfig";
 
-function cleanup_relink() {
-    local DIRECTORY;
-    DIRECTORY="$1";
-    find "$DIRECTORY" \( -name "*.a" -or -name "*.la" \) -delete;
-    rm -rf "$DIRECTORY/share/man"
-    relink.sh "$DIRECTORY";
-}
-
 function copy_libudev() {
     mkdir -p "$LINUX_OUTPUT_ROOT/lib";
-    cp -r /usr/lib/$ARCH-linux-gnu/libudev.so.1* "$LINUX_OUTPUT_ROOT/lib/";
+    cp -r /usr/lib/${ARCH_BUILD}-linux-gnu/libudev.so.1* "$LINUX_OUTPUT_ROOT/lib/";
 }
 
 function build_protobuf() {
@@ -33,7 +20,6 @@ function build_protobuf() {
     make "-j$CPUS";
     make install;
     popd;
-    cleanup_relink "$LINUX_OUTPUT_ROOT";
 }
 
 function build_llvm() {
@@ -80,7 +66,6 @@ function build_libusb() {
     make "-j$CPUS";
     make install;
     popd;
-    cleanup_relink "$LINUX_OUTPUT_ROOT";
 }
 
 function build_hidapi() {
@@ -93,7 +78,6 @@ function build_hidapi() {
     make "-j$CPUS";
     make install;
     popd;
-    cleanup_relink "$LINUX_OUTPUT_ROOT";
 }
 
 function build_openocd() {
@@ -106,8 +90,8 @@ function build_openocd() {
     LDFLAGS="-L$LINUX_OUTPUT_ROOT/lib" CPPFLAGS="-I$LINUX_OUTPUT_ROOT/include"  LD_LIBRARY_PATH="$LINUX_OUTPUT_ROOT/lib" \
         /toolchain/src/src/openocd/configure \
             "--prefix=$LINUX_OUTPUT_ROOT" \
-            "--host=$ARCH-linux-gnu" \
-            "--target=$ARCH-linux-gnu" \
+            "--host=${ARCH_TARGET}-linux-gnu" \
+            "--target=${ARCH_TARGET}-linux-gnu" \
             "--datarootdir=$LINUX_OUTPUT_ROOT" \
             "--localedir=$LINUX_OUTPUT_ROOT/share/locale" \
             "--disable-wextra" \
@@ -135,12 +119,50 @@ function build_openocd() {
         make "-j$CPUS";
     make install-strip;
     popd;
-    cleanup_relink "$LINUX_OUTPUT_ROOT";
 }
 
-build_protobuf;
-build_llvm;
-copy_libudev;
-build_libusb;
-build_hidapi;
-build_openocd;
+function build_doxygen() {
+    rm -rf "$LINUX_CONFIGURE_ROOT/doxygen";
+    mkdir -p "$LINUX_CONFIGURE_ROOT/doxygen";
+    pushd "$LINUX_CONFIGURE_ROOT/doxygen";
+    cmake -S \
+        /toolchain/src/src/doxygen \
+        -B build \
+        -DCMAKE_BUILD_TYPE=Release \
+        -G "Unix Makefiles";
+
+    cmake --build build --parallel $(nproc);
+    mkdir -p "$LINUX_OUTPUT_ROOT/bin/"
+    strip --strip-all "$LINUX_CONFIGURE_ROOT/doxygen/build/bin/doxygen" -o "$LINUX_OUTPUT_ROOT/bin/doxygen"
+    popd;
+}
+
+
+
+copy_libudev
+
+case "${CMD}" in
+    "protobuf")
+        build_protobuf
+        ;;
+    "llvm")
+        build_llvm
+        ;;
+    "doxygen")
+        build_doxygen
+        ;;
+    "libusb")
+        build_libusb;
+        ;;
+    "libhidapi")
+        build_hidapi;
+        ;;
+    "openocd")
+        build_openocd;
+        ;;
+    *)
+        die "$0: wrong build module ${CMD}"
+        ;;
+esac
+
+cleanup_relink "$LINUX_OUTPUT_ROOT";

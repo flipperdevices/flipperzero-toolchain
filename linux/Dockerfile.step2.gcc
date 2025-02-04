@@ -1,0 +1,34 @@
+##
+## flipperzero-toolchain-linux-newlib +
+## flipperzero-toolchain-linux-newlib-nano
+## flipperzero-toolchain-linux-gcc
+## flipperzero-toolchain-linux-gcc-nano
+##
+
+FROM flipperzero-toolchain-linux-build-base AS flipperzero-toolchain-linux-gcc
+
+#
+# dl && unpack
+#
+RUN . /toolchain/src/buildvars.sh \
+    && cmd wget -q "https://developer.arm.com/-/media/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-${ARCH_TARGET}-arm-none-eabi.tar.xz" \
+&& echo "[#] unpack sources" \
+    && cmd tar -xf /toolchain/src/archives/arm-gnu-toolchain-src-snapshot-12.3.rel1.tar.xz -C /toolchain/src/src/ \
+    && cmd rm -rf /toolchain/src/src/ncurses/* \
+    && cmd tar --strip-component=1 -xf /toolchain/src/archives/ncurses-6.2.tar.gz -C /toolchain/src/src/ncurses \
+    && cmd tar -xf arm-gnu-toolchain-12.2.rel1-${ARCH_TARGET}-arm-none-eabi.tar.xz -C /toolchain/src/src/ \
+    && cmd rm -rf /usr/share/doc/gcc \
+    && cmd cp -fr /toolchain/src/src/arm-gnu-toolchain-12.2.rel1-${ARCH_TARGET}-arm-none-eabi/* /usr/ \
+    && cmd find /toolchain/src/archives/ -type f -delete \
+&& echo "[#] Build newlib && gcc..." \
+    && cmd /toolchain/src/build-linux-gcc.sh gcc \
+        && cmd rm -rf $LINUX_CONFIGURE_ROOT/newlib \
+        && cmd rm -rf $LINUX_CONFIGURE_ROOT/gcc \
+        && cmd rm -rf /toolchain/newlib-root \
+&& echo "[#] Build newlib-nano && gcc-nano..." \
+    && cmd /toolchain/src/build-linux-gcc.sh gcc-nano \
+    && cmd /toolchain/src/build-linux-gcc.sh copy-libs \
+        && cmd rm -rf /toolchain/newlib-nano-root \
+    && cmd relink.sh /toolchain/linux-output-root \
+&& echo "[#] cleanup after build..." \
+    && cleanup_after_build

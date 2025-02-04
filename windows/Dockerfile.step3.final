@@ -1,0 +1,38 @@
+##
+## FINALLY
+## flipperzero-toolchain-linux
+##
+
+FROM debian:11-slim AS flipperzero-toolchain-windows
+
+WORKDIR /toolchain
+
+ENV DEBIAN_FRONTEND=noninteractive 
+
+COPY --from=flipperzero-toolchain-windows-binutils /toolchain/windows-output-root /toolchain/windows-output-root
+COPY --from=flipperzero-toolchain-windows-python-with-gdb /toolchain/windows-output-root /toolchain/windows-output-root
+COPY --from=flipperzero-toolchain-windows-gcc /toolchain/windows-output-root /toolchain/windows-output-root
+COPY --from=flipperzero-toolchain-windows-tools /toolchain/windows-output-root /toolchain/windows-output-root
+COPY --from=flipperzero-toolchain-windows-llvm /toolchain/windows-output-root /toolchain/windows-output-root
+
+COPY --from=flipperzero-toolchain-windows-build-base /usr/x86_64-w64-mingw32/lib /tmp/lib/
+
+ADD requirements.txt /toolchain/
+ADD scripts/strip.sh scripts/bundle_upload.sh /usr/local/bin/
+
+RUN apt -y update && apt -y  --no-install-recommends install ca-certificates wine gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 xz-utils curl zip wget \
+    && wget -q https://developer.arm.com/-/media/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz \
+    && mkdir -p /toolchain/src/src/ \
+    && tar -xf arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz -C /toolchain/src/src/ \
+    && rm -rf /toolchain/src/src/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/usr/share/doc \
+    && cp -fr /toolchain/src/src/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/* /usr/ \
+    && rm -rf /toolchain/src/src/ \
+    && rm -rf arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz \
+    && wine /toolchain/windows-output-root/python/python.exe -m pip --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org install --upgrade pip \
+    && wine /toolchain/windows-output-root/python/python.exe -m pip --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org install -r /toolchain/requirements.txt \
+    && strip.sh \
+    && cp /tmp/lib/*.dll /toolchain/windows-output-root/bin/ \
+    && cp /toolchain/windows-output-root/python/python311.dll /toolchain/windows-output-root/bin/ \
+    && cp /toolchain/windows-output-root/bin/libwinpthread-1.dll /toolchain/windows-output-root/libexec/gcc/arm-none-eabi/12.3.1/
+
+ADD patch/python311._pth /toolchain/windows-output-root/bin/

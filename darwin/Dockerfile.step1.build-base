@@ -1,0 +1,16 @@
+FROM MacOSVenturaWithBrew AS flipperzero-toolchain-mac-build-base
+
+RUN /bin/zsh -c "brew update-reset \
+    && brew install gettext texinfo coreutils bison flex m4 xz cmake automake autoconf libtool pkg-config \
+    && brew link bison --force" || true
+
+RUN mkdir -p /toolchain/src/src
+
+ADD https://developer.arm.com/-/media/Files/downloads/gnu/12.3.rel1/srcrel/arm-gnu-toolchain-src-snapshot-12.3.rel1.tar.xz /toolchain/src/archives/
+ADD scripts/ /toolchain/src/
+
+RUN /bin/zsh -c "mv /toolchain/src/scripts/* /toolchain/src/ \
+    && ln -s /toolchain/src/relink.sh /usr/bin/relink.sh \
+    && tar -xf /toolchain/src/archives/arm-gnu-toolchain-src-snapshot-12.3.rel1.tar.xz -C /toolchain/src/src/"
+
+RUN /bin/zsh /toolchain/src/build-mac-build-base.sh

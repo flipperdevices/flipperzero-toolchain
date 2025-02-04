@@ -2,11 +2,7 @@
 
 set -euo pipefail;
 
-WINDOWS_CONFIGURE_ROOT=/toolchain/windows-configure-root
-WINDOWS_BUILD_ROOT=/toolchain/windows-build-root
-WINDOWS_OUTPUT_ROOT=/toolchain/windows-output-root
-
-CPUS="$(grep -c processor /proc/cpuinfo )";
+. /toolchain/src/buildvars.sh
 
 export PKG_CONFIG_PATH="$WINDOWS_OUTPUT_ROOT/lib/pkgconfig";
 
@@ -151,13 +147,65 @@ function build_openocd() {
     popd;
 }
 
+function build_doxygen() {
+    rm -rf "$WINDOWS_CONFIGURE_ROOT/doxygen";
+    mkdir -p "$WINDOWS_CONFIGURE_ROOT/doxygen";
+    pushd "$WINDOWS_CONFIGURE_ROOT/doxygen";
+
+    rm -rf /toolchain/src/src/doxygen/deps/iconv_winbuild/*
+    find /toolchain/src/src/libiconv_winbuild \( -wholename "*x64/Release/*" -o -wholename "*.h" \) -type f -exec cp -f "{}" /toolchain/src/src/doxygen/deps/iconv_winbuild/ \;
+
+    cmake \
+        -S /toolchain/src/src/doxygen \
+        -DCMAKE_SYSTEM_NAME=Windows \
+        -DCMAKE_RC_COMPILER=x86_64-w64-mingw32-windres \
+        -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+        -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
+        -DCMAKE_PREFIX_PATH="/toolchain/src/src/doxygen/deps/iconv_winbuild" \
+        -B build \
+        -G "Unix Makefiles" \
+        -DCMAKE_BUILD_TYPE=Release;
+
+    cmake --build build --parallel $(nproc);
+    mkdir -p "$WINDOWS_OUTPUT_ROOT/bin/"
+    cp "$WINDOWS_CONFIGURE_ROOT/doxygen/build/bin/doxygen.exe" "$WINDOWS_OUTPUT_ROOT/bin/"
+    cp /toolchain/src/src/doxygen/deps/iconv_winbuild/libiconv.dll "$WINDOWS_OUTPUT_ROOT/bin/"
+
+    popd;
+}
+
+
 function cleanup() {
     find "$WINDOWS_OUTPUT_ROOT" \( -name "*.a" -or -name "*.la" \) -delete;
 }
 
-build_protobuf;
-build_llvm;
-build_libusb;
-build_hidapi;
-build_openocd;
-cleanup;
+
+
+
+case "${CMD}" in
+    "protobuf")
+        build_protobuf
+        ;;
+    "llvm")
+        build_llvm
+        ;;
+    "doxygen")
+        build_doxygen
+        ;;
+    "libusb")
+        build_libusb
+        ;;
+    "libhidapi")
+        build_hidapi
+        ;;
+    "openocd")
+        build_openocd
+        ;;
+    "cleanup")
+        cleanup
+        ;;
+    *)
+        die "$0: wrong build module ${CMD}"
+        ;;
+esac
+

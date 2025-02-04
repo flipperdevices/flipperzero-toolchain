@@ -1,0 +1,53 @@
+##
+## flipperzero-toolchain-windowssrc +
+## flipperzero-toolchain-windowsbuild-deps
+##
+FROM debian:11 AS flipperzero-toolchain-windows-build-base
+
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+
+RUN echo "Building on $BUILDPLATFORM, targeting $TARGETPLATFORM"
+
+WORKDIR /toolchain/src/archives/
+
+ENV DEBIAN_FRONTEND=noninteractive 
+
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh \
+    && apt update \
+    && apt -y --no-install-recommends install ca-certificates build-essential xz-utils m4 bison flex texinfo file patchelf rsync automake autoconf libtool python3 git pkg-config libudev-dev git wget git patch unzip \
+    && apt-get -y clean \
+    && rm -rf /tmp/* /var/tmp/*  /var/lib/apt/lists/*
+
+#
+# Add build scripts
+#
+ADD scripts/ /toolchain/src/
+
+#
+# dl archives
+#
+RUN case ${TARGETPLATFORM} in \
+         "linux/amd64")  ARCH=x86_64  ;; \
+         "linux/arm64")  ARCH=aarch64  ;; \
+    esac \
+    && echo "ARCH_TARGET=${ARCH}" >> /toolchain/src/buildvars.sh \
+    && . /toolchain/src/buildvars.sh \
+    && cmd mkdir -p "/toolchain/src/src/" \
+    && cmd wget -q https://github.com/xpack-dev-tools/mingw-w64-gcc-xpack/releases/download/v12.3.0-1/xpack-mingw-w64-gcc-12.3.0-1-linux-x64.tar.gz \
+    && cmd wget -q https://developer.arm.com/-/media/Files/downloads/gnu/12.3.rel1/srcrel/arm-gnu-toolchain-src-snapshot-12.3.rel1.tar.xz \
+    && wget -q "https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.2.tar.gz" \
+&& echo "[#] install cmake..." \
+    && wget -q "https://github.com/Kitware/CMake/releases/download/v3.28.0/cmake-3.28.0-linux-${ARCH}.tar.gz" \
+    && tar -xvf cmake-3.28.0-linux-${ARCH}.tar.gz -C /tmp \
+    && rsync -azv /tmp/cmake-3.28.0-linux-${ARCH}/ /usr \
+    && rm cmake-3.28.0-linux-${ARCH}.tar.gz \
+    && cmd tar --strip-component=1 -xf xpack-mingw-w64-gcc-12.3.0-1-linux-x64.tar.gz -C /usr/ \
+    && cmd rm -rf xpack-mingw-w64-gcc-12.3.0-1-linux-x64.tar.gz \
+    && cmd tar -xf arm-gnu-toolchain-src-snapshot-12.3.rel1.tar.xz -C /toolchain/src/src/ \
+    && rm -rf /toolchain/src/src/ncurses/* \
+    && tar --strip-component=1 -xvf ncurses-6.2.tar.gz -C /toolchain/src/src/ncurses \
+    && ln -s /toolchain/src/relink.sh /usr/local/bin/relink.sh \
+    && cmd /toolchain/src/build-windows-gcc.sh gcc-libs \
+&& echo "[#] cleanup ... " \
+    && rm -rf /toolchain/src/src/*

@@ -2,11 +2,9 @@
 
 set -euo pipefail;
 
-WINDOWS_CONFIGURE_ROOT=/toolchain/windows-configure-root
-WINDOWS_BUILD_ROOT=/toolchain/windows-build-root
-WINDOWS_OUTPUT_ROOT=/toolchain/windows-output-root
 
-CPUS="$(grep -c processor /proc/cpuinfo )";
+. /toolchain/src/buildvars.sh
+
 
 function build_binutils() {
     rm -rf "$WINDOWS_CONFIGURE_ROOT/binutils";
@@ -30,4 +28,5 @@ function build_binutils() {
     make install;
     popd;
 }
+
 build_binutils;

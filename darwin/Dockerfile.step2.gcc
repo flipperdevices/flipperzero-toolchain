@@ -1,0 +1,6 @@
+FROM flipperzero-toolchain-mac-binutils AS flipperzero-toolchain-mac-gcc
+
+RUN /bin/zsh /toolchain/src/build-mac-gcc-first.sh
+RUN /bin/zsh /toolchain/src/build-mac-gcc-newlib.sh
+RUN /bin/zsh /toolchain/src/build-mac-gcc.sh
+RUN /bin/zsh /toolchain/src/move_newlib_to_nano.sh

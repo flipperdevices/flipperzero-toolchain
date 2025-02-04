@@ -1,0 +1,36 @@
+##
+## flipperzero-toolchain-linux-newlib +
+## flipperzero-toolchain-windows-gcc
+##
+
+FROM flipperzero-toolchain-windows-build-base AS flipperzero-toolchain-windows-gcc
+
+ADD patch/DEFINE-WIN32_LEAN_AND_MEAN.patch /toolchain/src/
+
+#
+RUN . /toolchain/src/buildvars.sh \
+    && cmd wget -q "https://developer.arm.com/-/media/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-${ARCH_TARGET}-arm-none-eabi.tar.xz" \
+&& echo "[#] unpack sources" \
+    && cmd tar -xf /toolchain/src/archives/arm-gnu-toolchain-src-snapshot-12.3.rel1.tar.xz -C /toolchain/src/src/ \
+    && cmd rm -rf /toolchain/src/src/ncurses/* \
+    && cmd tar --strip-component=1 -xf /toolchain/src/archives/ncurses-6.2.tar.gz -C /toolchain/src/src/ncurses \
+    && cd /toolchain/src/src/arm-gnu-toolchain-src-snapshot-12.3.rel1 \
+    && git apply /toolchain/src/DEFINE-WIN32_LEAN_AND_MEAN.patch \
+    && cd /toolchain/src/archives/ \
+    && cmd tar -xf arm-gnu-toolchain-12.2.rel1-${ARCH_TARGET}-arm-none-eabi.tar.xz -C /toolchain/src/src/ \
+    && cmd rm -rf /usr/share/doc/gcc \
+    && cmd cp -fr /toolchain/src/src/arm-gnu-toolchain-12.2.rel1-${ARCH_TARGET}-arm-none-eabi/* /usr/ \
+&& echo "[#] remove archives" \
+    && cmd find /toolchain/src/archives/ -type f -delete \
+&& echo "[#] Build newlib && gcc..." \
+    && cmd /toolchain/src/build-windows-gcc.sh gcc \
+        && cmd rm -rf $WINDOWS_CONFIGURE_ROOT/newlib \
+        && cmd rm -rf $WINDOWS_CONFIGURE_ROOT/gcc \
+        && cmd rm -rf /toolchain/newlib-root \
+&& echo "[#] Build newlib-nano && gcc-nano..." \
+    && cmd /toolchain/src/build-windows-gcc.sh gcc-nano \
+    && cmd /toolchain/src/build-windows-gcc.sh copy-libs \
+        && cmd rm -rf /toolchain/newlib-nano-root \
+    && cmd relink.sh /toolchain/windows-output-root \
+&& echo "[#] cleanup after build..." \
+    && cleanup_after_build

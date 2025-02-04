@@ -92,7 +92,7 @@ function relink_object() {
     patchelf --set-rpath "\$ORIGIN/$LIB_REL_PATH" "$OBJECT";
     patchelf --add-needed "$LIB" "$OBJECT";
 }
-OBJECTS=( $(find "${DIRECTORY}_bak" -type f ! -size 0 ! -name "*.a" -and ! -name "*.o" -exec file {} \; | grep ELF | awk -F ': ELF' '{print $1}') );
+OBJECTS=( $(find "${DIRECTORY}_bak" -type f ! -size 0 ! -name "*.a" -and ! -name "*.o" -exec file {} \; | ( grep ELF || true ) | awk -F ': ELF' '{print $1}') );
 for CUR in "${OBJECTS[@]}"; do
     if ! check_object "$CUR"; then
         relink_object "$CUR";

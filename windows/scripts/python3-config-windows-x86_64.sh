@@ -5,9 +5,8 @@
 # follows the interface of gdb/python/python-config.py but return path
 # related to Windows Python.
 
-WINDOWS_CONFIGURE_ROOT=/toolchain/windows-configure-root
-WINDOWS_BUILD_ROOT=/toolchain/windows-build-root
-WINDOWS_OUTPUT_ROOT=/toolchain/windows-output-root
+. /toolchain/src/buildvars.sh
+
 PYTHON_PATH="$WINDOWS_OUTPUT_ROOT/python";
 
 while [ $# -ge 1 ]; do

@@ -1,0 +1,37 @@
+##
+## flipperzero-toolchain-linux-tools
+##
+FROM flipperzero-toolchain-linux-build-base AS flipperzero-toolchain-linux-tools
+
+ADD "https://github.com/protocolbuffers/protobuf/releases/download/v21.7/protobuf-cpp-3.21.7.tar.gz" .
+ADD "https://github.com/libusb/libusb/releases/download/v1.0.24/libusb-1.0.24.tar.bz2" .
+ADD "https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.14.0.tar.gz" .
+ADD "https://github.com/doxygen/doxygen/releases/download/Release_1_12_0/doxygen-1.12.0.src.tar.gz" .
+
+#
+# Unpack && remove archives
+#
+# [!] savannah.nongnu.org often gives back error 502, which breaks the build. so we take the source from the developer repo.
+#
+
+RUN . /toolchain/src/buildvars.sh \
+    && mkdir -p /toolchain/src/src/{protobuf,libusb,hidapi,doxygen} \
+    && tar --strip-component=1 -xf protobuf-cpp-3.21.7.tar.gz -C /toolchain/src/src/protobuf \
+    && tar --strip-component=1 -xf libusb-1.0.24.tar.bz2 -C /toolchain/src/src/libusb \
+    && tar --strip-component=1 -xf hidapi-0.14.0.tar.gz -C /toolchain/src/src/hidapi \
+    && tar --strip-component=1 -xf doxygen-1.12.0.src.tar.gz -C /toolchain/src/src/doxygen \
+    && git clone https://github.com/flipperdevices/openocd.git /toolchain/src/src/openocd \
+    && cd /toolchain/src/src/openocd \
+    && git reset --hard 4b909a31d34167f3ef03ff6f70e6d5b4caa7928a \
+    && sed -i 's/https\:\/\/git.savannah.nongnu.org\/git\/git2cl.git/git:\/\/repo.or.cz\/git2cl.git/g' /toolchain/src/src/openocd/.gitmodules \
+    && git submodule update --init --recursive \
+    && find /toolchain/src/archives/ -type f -delete \
+&& echo "[#] build ... " \
+    && /toolchain/src/build-linux-flipper-tools.sh protobuf \
+    && /toolchain/src/build-linux-flipper-tools.sh libusb \
+    && /toolchain/src/build-linux-flipper-tools.sh libhidapi \
+    && /toolchain/src/build-linux-flipper-tools.sh openocd \
+    && /toolchain/src/build-linux-flipper-tools.sh doxygen \
+    && . /toolchain/src/buildvars.sh \
+&& echo "[#] cleanup ... " \
+    && cleanup_after_build

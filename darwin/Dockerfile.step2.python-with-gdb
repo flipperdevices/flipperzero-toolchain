@@ -1,0 +1,21 @@
+FROM flipperzero-toolchain-mac-binutils AS flipperzero-toolchain-mac-python-with-gdb
+
+RUN /bin/zsh -c "brew uninstall zx || true"
+
+ADD https://www.python.org/ftp/python/3.11.9/Python-3.11.9.tgz /toolchain/src/archives/
+ADD https://www.openssl.org/source/openssl-1.1.1w.tar.gz /toolchain/src/archives/
+ADD https://ftp.gnu.org/gnu/gdb/gdb-13.2.tar.gz /toolchain/src/archives
+
+RUN /bin/zsh -c "cd /toolchain/src/archives \
+    && mkdir -p /toolchain/src/src/{python,openssl} \
+    && tar --strip-component=1 -xf Python-3.11.9.tgz -C /toolchain/src/src/python \
+    && tar --strip-component=1 -xf openssl-1.1.1w.tar.gz -C /toolchain/src/src/openssl \
+    && mkdir -p /toolchain/src/src/gdb/ \
+    && tar  --strip-component=1 -xf gdb-13.2.tar.gz -C /toolchain/src/src/gdb/"
+
+RUN /bin/zsh /toolchain/src/build-mac-python-libs.sh
+RUN /bin/zsh /toolchain/src/build-mac-python.sh
+RUN /bin/zsh /toolchain/src/build-mac-gdb.sh
+
+RUN /bin/zsh -c "relink.sh /toolchain/mac-x86_64-output-root"
+RUN /bin/zsh -c "relink.sh /toolchain/mac-arm64-output-root"
