@@ -100,7 +100,7 @@ jobs:
               -e "TOOLCHAIN_VERSION=$IMAGE_TAG" \
               -e "INDEXER_URL=${{ secrets.INDEXER_URL }}" \
               -e "INDEXER_TOKEN=${{ secrets.INDEXER_TOKEN }}" \
-              ${{ steps.meta.outputs.image_name }}:${{ steps.meta.outputs.image_tag } \
+              ${{ steps.meta.outputs.image_name }}:${{ steps.meta.outputs.image_tag }} \
               /usr/bin/bundle_upload.sh
 
   build-toolchain-mac-based:
