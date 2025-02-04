@@ -17,7 +17,7 @@ COPY --from=flipperzero-toolchain-linux-llvm /toolchain/linux-output-root /toolc
 ADD requirements.txt /toolchain/requirements.txt
 ADD scripts/relink.sh scripts/strip.sh scripts/bundle_upload.sh scripts/fix_python_scripts_shebang.sh /usr/local/bin/
 
-RUN apt update && apt -y install --no-install-recommends build-essential file patchelf curl \
+RUN apt update && apt -y install --no-install-recommends ca-certificates build-essential file patchelf curl \
     && PATH="/toolchain/linux-output-root/bin/:$PATH"/usr/bin/env python3 -m pip install --upgrade pip \
     && PATH="/toolchain/linux-output-root/bin/:$PATH"/usr/bin/env python3 -m pip install -r /toolchain/requirements.txt \
     && relink.sh /toolchain/linux-output-root \
