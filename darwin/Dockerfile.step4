@@ -1,3 +1,0 @@
-FROM flipperzero-toolchain-binutils AS flipperzero-toolchain-gcc-first
-ADD scripts/build-mac-gcc-first.sh /toolchain/src/
-RUN bash /toolchain/src/build-mac-gcc-first.sh

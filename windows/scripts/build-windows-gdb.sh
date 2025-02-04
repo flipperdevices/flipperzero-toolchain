@@ -2,11 +2,7 @@
 
 set -euo pipefail;
 
-WINDOWS_CONFIGURE_ROOT=/toolchain/windows-configure-root
-WINDOWS_BUILD_ROOT=/toolchain/windows-build-root
-WINDOWS_OUTPUT_ROOT=/toolchain/windows-output-root
-
-CPUS="$(grep -c processor /proc/cpuinfo )";
+. /toolchain/src/buildvars.sh
 
 build_windows_gdb() {
     rm -rf "$WINDOWS_CONFIGURE_ROOT/gdb";

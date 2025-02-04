@@ -2,28 +2,13 @@
 
 set -euo pipefail;
 
-LINUX_BUILD_ROOT=/toolchain/linux-build-root
-LINUX_OUTPUT_ROOT=/toolchain/linux-output-root
-LINUX_CONFIGURE_ROOT=/toolchain/linux-configure-root
-
-CPUS="$(grep -c processor /proc/cpuinfo )";
-
-function cleanup_relink() {
-    local DIRECTORY;
-    DIRECTORY="$1";
-    find "$DIRECTORY" \
-        -type f \
-        -name "*.a" \
-        -delete;
-    rm -rf "$DIRECTORY/share/man"
-    relink.sh "$DIRECTORY";
-}
+. /toolchain/src/buildvars.sh
 
 function build_linux_gdb() {
     rm -rf "$LINUX_CONFIGURE_ROOT/gdb";
     mkdir -p "$LINUX_CONFIGURE_ROOT/gdb";
     pushd "$LINUX_CONFIGURE_ROOT/gdb";
-    LDFLAGS="-L$LINUX_BUILD_ROOT/lib -L$LINUX_OUTPUT_ROOT/lib" CPPFLAGS="-I$LINUX_BUILD_ROOT/include -I$LINUX_OUTPUT_ROOT/include -I$LINUX_OUTPUT_ROOT/include/readline" LD_LIBRARY_PATH="LINUX_OUTPUT_ROOT/lib" "/toolchain/src/src/gdb-13.2/configure" \
+    LDFLAGS="-L$LINUX_BUILD_ROOT/lib -L$LINUX_OUTPUT_ROOT/lib" CPPFLAGS="-I$LINUX_BUILD_ROOT/include -I$LINUX_OUTPUT_ROOT/include -I$LINUX_OUTPUT_ROOT/include/readline" LD_LIBRARY_PATH="LINUX_OUTPUT_ROOT/lib" "/toolchain/src/src/gdb/configure" \
         --enable-initfini-array \
         --enable-tui \
         --disable-nls \
@@ -62,14 +47,13 @@ function build_linux_gdb() {
     LDFLAGS="-L$LINUX_BUILD_ROOT/lib -L$LINUX_OUTPUT_ROOT/lib" CPPFLAGS="-I$LINUX_BUILD_ROOT/include -I$LINUX_OUTPUT_ROOT/include -I$LINUX_OUTPUT_ROOT/include/readline" LD_LIBRARY_PATH="LINUX_OUTPUT_ROOT/lib" make "-j$CPUS";
     LDFLAGS="-L$LINUX_BUILD_ROOT/lib -L$LINUX_OUTPUT_ROOT/lib" CPPFLAGS="-I$LINUX_BUILD_ROOT/include -I$LINUX_OUTPUT_ROOT/include -I$LINUX_OUTPUT_ROOT/include/readline" LD_LIBRARY_PATH="LINUX_OUTPUT_ROOT/lib" make install;
     popd;
-    cleanup_relink "$LINUX_OUTPUT_ROOT";
 }
 
 function build_linux_gdb_py() {
     rm -rf "$LINUX_CONFIGURE_ROOT/gdb-py";
     mkdir -p "$LINUX_CONFIGURE_ROOT/gdb-py";
     pushd "$LINUX_CONFIGURE_ROOT/gdb-py";
-    LDFLAGS="-L$LINUX_BUILD_ROOT/lib -L$LINUX_OUTPUT_ROOT/lib" CPPFLAGS="-I$LINUX_BUILD_ROOT/include -I$LINUX_OUTPUT_ROOT/include -I$LINUX_OUTPUT_ROOT/include/readline" LD_LIBRARY_PATH="LINUX_OUTPUT_ROOT/lib" "/toolchain/src/src/gdb-13.2/configure" \
+    LDFLAGS="-L$LINUX_BUILD_ROOT/lib -L$LINUX_OUTPUT_ROOT/lib" CPPFLAGS="-I$LINUX_BUILD_ROOT/include -I$LINUX_OUTPUT_ROOT/include -I$LINUX_OUTPUT_ROOT/include/readline" LD_LIBRARY_PATH="LINUX_OUTPUT_ROOT/lib" "/toolchain/src/src/gdb/configure" \
         --enable-initfini-array \
         --enable-tui \
         --disable-nls \
@@ -111,7 +95,8 @@ function build_linux_gdb_py() {
     LDFLAGS="-L$LINUX_BUILD_ROOT/lib -L$LINUX_OUTPUT_ROOT/lib" CPPFLAGS="-I$LINUX_BUILD_ROOT/include -I$LINUX_OUTPUT_ROOT/include -I$LINUX_OUTPUT_ROOT/include/readline" LD_LIBRARY_PATH="LINUX_OUTPUT_ROOT/lib" make "-j$CPUS";
     LDFLAGS="-L$LINUX_BUILD_ROOT/lib -L$LINUX_OUTPUT_ROOT/lib" CPPFLAGS="-I$LINUX_BUILD_ROOT/include -I$LINUX_OUTPUT_ROOT/include -I$LINUX_OUTPUT_ROOT/include/readline" LD_LIBRARY_PATH="LINUX_OUTPUT_ROOT/lib" make install;
     popd;
-    cleanup_relink "$LINUX_OUTPUT_ROOT";
 }
-build_linux_gdb;
-build_linux_gdb_py;
+
+#build_linux_gdb
+build_linux_gdb_py
+cleanup_relink "$LINUX_OUTPUT_ROOT"

@@ -1,0 +1,26 @@
+##
+## flipperzero-toolchain-windows-tools
+##
+FROM flipperzero-toolchain-windows-build-base AS flipperzero-toolchain-windows-llvm
+
+ADD "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/llvm-18.1.8.src.tar.xz" .
+ADD "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/clang-18.1.8.src.tar.xz" .
+ADD "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/cmake-18.1.8.src.tar.xz" .
+ADD "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/third-party-18.1.8.src.tar.xz" .
+ADD "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/clang-tools-extra-18.1.8.src.tar.xz" .
+
+#
+# Unpack all & remove archives
+#
+RUN . /toolchain/src/buildvars.sh \
+    && cmd mkdir -p /toolchain/src/src/llvm/{cmake,third-party,llvm-18.1.8.src/tools/clang/tools/extra} \
+    && cmd tar -xf llvm-18.1.8.src.tar.xz -C /toolchain/src/src/llvm \
+    && cmd tar --strip-component=1 -xf clang-18.1.8.src.tar.xz -C /toolchain/src/src/llvm/llvm-18.1.8.src/tools/clang \
+    && cmd tar --strip-component=1 -xf cmake-18.1.8.src.tar.xz -C /toolchain/src/src/llvm/cmake \
+    && cmd tar --strip-component=1 -xf third-party-18.1.8.src.tar.xz -C /toolchain/src/src/llvm/third-party \
+    && cmd tar --strip-component=1 -xf clang-tools-extra-18.1.8.src.tar.xz -C /toolchain/src/src/llvm/llvm-18.1.8.src/tools/clang/tools/extra \
+    && cmd find /toolchain/src/archives -type f -delete \
+&& echo "[#] build llmv..." \
+    && cmd /toolchain/src/build-windows-flipper-tools.sh llvm \
+&& echo "[#] cleanup after build..." \
+    && cleanup_after_build

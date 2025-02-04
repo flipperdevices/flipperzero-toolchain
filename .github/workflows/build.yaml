@@ -1,0 +1,137 @@
+name: 'Build toolchain'
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+   contents: read
+
+jobs:
+  build-toolchain-linux-based:
+    name: ${{ matrix.config.os }}/${{ matrix.config.arch }} toolchain
+    runs-on: ${{ matrix.config.runner_os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+            arch: arm64,
+            os: linux,
+            runner_os: ubuntu-24.04-arm
+          }
+        - {
+            arch: amd64,
+            os: linux,
+            runner_os: ubuntu-24.04
+          }
+        - {
+            arch: amd64,
+            os: windows,
+            runner_os: ubuntu-24.04
+          }
+
+    env:
+      IMAGE_NAME: flipperzero-toolchain-${{ matrix.config.os }}
+      IMAGE_ARCH: ${{ matrix.config.arch }}
+
+    steps:
+      - name: free a little hdd space
+        run: |
+          df -h
+          sudo rm -rf /usr/local/share/chromium || true
+          sudo rm -rf /usr/local/share/powershell || true
+          sudo rm -rf /usr/local/lib/android || true
+          sudo rm -rf /opt/hostedtoolcache/CodeQL  || true
+          sudo rm -rf /opt/hostedtoolcache/Python || true
+          sudo rm -rf /opt/hostedtoolcache/go || true
+          sudo rm -rf /opt/hostedtoolcache/node || true
+          df -h
+
+      - name: 'checkout code'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: 'Set image tag and name'
+        id: meta
+        run: |
+          IMAGE_TAG="0"
+          if [[ "${{ github.ref }}" == "refs/tags/"* ]]; then
+            REF=${{ github.ref }};
+            TAG_FULL=${REF#refs/*/};
+            IMAGE_TAG=${TAG_FULL//\//_};
+          fi
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "image_name=${IMAGE_NAME}" >> $GITHUB_OUTPUT
+          echo "image_arch=${IMAGE_ARCH}" >> $GITHUB_OUTPUT
+
+      - name: setup docker buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: merge dockerfiles
+        run: |
+          cat ./${{ matrix.config.os }}/Dockerfile.* > ./${{ matrix.config.os }}/Dockerfile
+
+      - name: build and export base_build image
+        id: docker_build
+        uses: docker/build-push-action@v6
+        with:
+          file: ./${{ matrix.config.os }}/Dockerfile
+          context: ./${{ matrix.config.os }}/
+          tags: ${{ steps.meta.outputs.image_name }}:${{ steps.meta.outputs.image_tag }}
+          load: true
+          cache-from: type=gha,scope=${{ steps.meta.outputs.image_name }}_${{ steps.meta.outputs.image_tag }}_${{ steps.meta.outputs.image_arch }}
+          cache-to: type=gha,mode=max,scope=${{ steps.meta.outputs.image_name }}_${{ steps.meta.outputs.image_tag }}_${{ steps.meta.outputs.image_arch }}
+
+
+      - name: 'Bundle and upload ${{ matrix.config.os }}/${{ matrix.config.arch }} toolchain'
+        run: |
+          docker run --rm \
+              -e "TOOLCHAIN_VERSION=$IMAGE_TAG" \
+              -e "INDEXER_URL=${{ secrets.INDEXER_URL }}" \
+              -e "INDEXER_TOKEN=${{ secrets.INDEXER_TOKEN }}" \
+              ${{ steps.meta.outputs.image_name }}:${{ steps.meta.outputs.image_tag } \
+              /usr/bin/bundle_upload.sh
+
+  build-toolchain-mac-based:
+    runs-on: [self-hosted, macOS, ARM64, FlipperZeroToolchainChmocker]
+    steps:
+      - name: 'Wipe workspace'
+        run: find ./ -mount -maxdepth 1 -exec rm -rf {} \;
+
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: 'Set image tag and name'
+        id: tag
+        run: |
+          IMAGE_TAG="0"
+          if [[ "${{ github.ref }}" == "refs/tags/"* ]]; then
+            REF=${{ github.ref }};
+            TAG_FULL=${REF#refs/*/};
+            IMAGE_TAG=${TAG_FULL//\//_};
+          fi
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+
+      - name: 'upload mac toolchain'
+        run: |
+          sudo chmocker run --rm \
+              -e "TOOLCHAIN_VERSION=$IMAGE_TAG" \
+              -e "INDEXER_URL=${{ secrets.INDEXER_URL }}" \
+              -e "INDEXER_TOKEN=${{ secrets.INDEXER_TOKEN }}" \
+              flipperzero-toolchain-mac:${IMAGE_TAG} \
+              /usr/bin/bundle_upload.sh

@@ -1,0 +1,14 @@
+##
+## flipperzero-toolchain-windows-binutils
+##
+FROM flipperzero-toolchain-windows-build-base AS flipperzero-toolchain-windows-binutils
+
+RUN . /toolchain/src/buildvars.sh \
+echo "[#] unpack sources" \
+    && cmd tar -xf arm-gnu-toolchain-src-snapshot-12.3.rel1.tar.xz -C /toolchain/src/src/ \
+&& echo "[#] build binutils" \
+    && cmd /toolchain/src/build-windows-binutils.sh \
+&& echo "[#] cleanup..." \
+    && cleanup_after_build
+
+

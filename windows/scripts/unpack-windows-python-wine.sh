@@ -2,11 +2,8 @@
 
 set -euo pipefail;
 
-WINDOWS_CONFIGURE_ROOT=/toolchain/windows-configure-root
-WINDOWS_BUILD_ROOT=/toolchain/windows-build-root
-WINDOWS_OUTPUT_ROOT=/toolchain/windows-output-root
+. /toolchain/src/buildvars.sh
 
-CPUS="$(grep -c processor /proc/cpuinfo )";
 DUMMY_FB_PID=0;
 
 function stop_dummy_fb() {
@@ -23,7 +20,7 @@ function setup_wine() {
     DISPLAY=:0.0 WINEARCH=win64 winecfg /v win81;
 }
 function unpack_python() {
-    pushd /toolchain/src/src/archives;
+    pushd /toolchain/src/archives;
     DISPLAY=:0.0 WINEARCH=win64 wine cmd /c python-3.11.9-amd64.exe /quiet PrependPath=1 InstallAllUsers=1 TargetDir=C:\\Python
     popd;
 }

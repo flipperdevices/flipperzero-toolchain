@@ -1,0 +1,33 @@
+FROM MacOSVenturaWithBrew AS flipperzero-toolchain-mac
+RUN /bin/zsh -c "brew install coreutils bison \
+    && brew link bison --force"
+
+COPY --from=flipperzero-toolchain-mac-binutils /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
+COPY --from=flipperzero-toolchain-mac-python-with-gdb /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
+COPY --from=flipperzero-toolchain-mac-gcc /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
+COPY --from=flipperzero-toolchain-mac-llvm /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
+COPY --from=flipperzero-toolchain-mac-tools /toolchain/mac-x86_64-output-root /toolchain/mac-x86_64-output-root
+
+COPY --from=flipperzero-toolchain-mac-binutils /toolchain/mac-arm64-output-root /toolchain/mac-arm64-output-root
+COPY --from=flipperzero-toolchain-mac-python-with-gdb /toolchain/mac-arm64-output-root /toolchain/mac-arm64-output-root
+COPY --from=flipperzero-toolchain-mac-gcc /toolchain/mac-arm64-output-root /toolchain/mac-arm64-output-root
+COPY --from=flipperzero-toolchain-mac-llvm /toolchain/mac-arm64-output-root /toolchain/mac-arm64-output-root
+COPY --from=flipperzero-toolchain-mac-tools /toolchain/mac-arm64-output-root /toolchain/mac-arm64-output-root
+
+ADD requirements.txt /toolchain/
+ADD scripts/strip.sh /usr/bin/
+ADD scripts/relink.sh /usr/bin/
+ADD scripts/bundle_upload.sh /usr/bin/
+ADD scripts/fix_python_scripts_shebang.sh /usr/bin/
+
+RUN /bin/zsh -c "/toolchain/mac-x86_64-output-root/bin/python3 -m pip install --upgrade pip \
+    && /toolchain/mac-x86_64-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt \
+    && /toolchain/mac-arm64-output-root/bin/python3 -m pip install --upgrade pip \
+    && /toolchain/mac-arm64-output-root/bin/python3 -m pip install -r /toolchain/requirements.txt"
+
+
+RUN /bin/zsh -c "relink.sh /toolchain/mac-x86_64-output-root"
+RUN /bin/zsh -c "relink.sh /toolchain/mac-arm64-output-root"
+
+RUN /bin/zsh strip.sh
+RUN /bin/zsh fix_python_scripts_shebang.sh

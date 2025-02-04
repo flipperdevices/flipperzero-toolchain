@@ -400,7 +400,7 @@ function build_doxygen() {
 
     cmake --build build --parallel $(nproc);
     mkdir -p "$MAC_ARM64_OUTPUT_ROOT/bin/"
-    strip --strip-all "$MAC_ARM64_CONFIGURE_ROOT/doxygen/build/bin/doxygen" -o "$MAC_ARM64_OUTPUT_ROOT/bin/doxygen"
+    strip "$MAC_ARM64_CONFIGURE_ROOT/doxygen/build/bin/doxygen" -o "$MAC_ARM64_OUTPUT_ROOT/bin/doxygen"
 
     popd;
 }
@@ -408,8 +408,8 @@ function build_doxygen() {
 build_doxygen;
 build_protobuf_x86_64;
 build_protobuf_arm64;
-build_llvm_x86_64;
-build_llvm_arm64;
+#build_llvm_x86_64;
+#build_llvm_arm64;
 build_libusb_x86_64;
 build_libusb_arm64;
 build_hidapi_x86_64;

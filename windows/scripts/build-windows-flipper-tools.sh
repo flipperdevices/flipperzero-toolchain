@@ -2,11 +2,7 @@
 
 set -euo pipefail;
 
-WINDOWS_CONFIGURE_ROOT=/toolchain/windows-configure-root
-WINDOWS_BUILD_ROOT=/toolchain/windows-build-root
-WINDOWS_OUTPUT_ROOT=/toolchain/windows-output-root
-
-CPUS="$(grep -c processor /proc/cpuinfo )";
+. /toolchain/src/buildvars.sh
 
 export PKG_CONFIG_PATH="$WINDOWS_OUTPUT_ROOT/lib/pkgconfig";
 
@@ -183,10 +179,33 @@ function cleanup() {
     find "$WINDOWS_OUTPUT_ROOT" \( -name "*.a" -or -name "*.la" \) -delete;
 }
 
-build_doxygen;
-build_protobuf;
-build_llvm;
-build_libusb;
-build_hidapi;
-build_openocd;
-cleanup;
+
+
+
+case "${CMD}" in
+    "protobuf")
+        build_protobuf
+        ;;
+    "llvm")
+        build_llvm
+        ;;
+    "doxygen")
+        build_doxygen
+        ;;
+    "libusb")
+        build_libusb
+        ;;
+    "libhidapi")
+        build_hidapi
+        ;;
+    "openocd")
+        build_openocd
+        ;;
+    "cleanup")
+        cleanup
+        ;;
+    *)
+        die "$0: wrong build module ${CMD}"
+        ;;
+esac
+

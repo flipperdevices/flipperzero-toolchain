@@ -1,2 +1,6 @@
 build/
 temp/
+*.swp
+*.swo
+.trash*
+*.xz

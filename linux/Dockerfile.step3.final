@@ -1,0 +1,25 @@
+##
+## FINALLY
+## flipperzero-toolchain-linux
+##
+FROM debian:11-slim AS flipperzero-toolchain-linux
+
+WORKDIR /toolchain
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+COPY --from=flipperzero-toolchain-linux-binutils /toolchain/linux-output-root /toolchain/linux-output-root
+COPY --from=flipperzero-toolchain-linux-python-with-gdb /toolchain/linux-output-root /toolchain/linux-output-root
+COPY --from=flipperzero-toolchain-linux-gcc /toolchain/linux-output-root /toolchain/linux-output-root
+COPY --from=flipperzero-toolchain-linux-tools /toolchain/linux-output-root /toolchain/linux-output-root
+COPY --from=flipperzero-toolchain-linux-llvm /toolchain/linux-output-root /toolchain/linux-output-root
+
+ADD requirements.txt /toolchain/requirements.txt
+ADD scripts/relink.sh scripts/strip.sh scripts/bundle_upload.sh scripts/fix_python_scripts_shebang.sh /usr/local/bin/
+
+RUN apt update && apt -y install --no-install-recommends build-essential file patchelf curl \
+    && PATH="/toolchain/linux-output-root/bin/:$PATH"/usr/bin/env python3 -m pip install --upgrade pip \
+    && PATH="/toolchain/linux-output-root/bin/:$PATH"/usr/bin/env python3 -m pip install -r /toolchain/requirements.txt \
+    && relink.sh /toolchain/linux-output-root \
+    && strip.sh /toolchain/linux-output-root \
+    && fix_python_scripts_shebang.sh
