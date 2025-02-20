@@ -97,6 +97,6 @@ function build_linux_gdb_py() {
     popd;
 }
 
-#build_linux_gdb
+build_linux_gdb
 build_linux_gdb_py
 cleanup_relink "$LINUX_OUTPUT_ROOT"
