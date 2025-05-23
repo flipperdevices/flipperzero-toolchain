@@ -104,6 +104,7 @@ jobs:
               /usr/local/bin/bundle_upload.sh
 
   build-toolchain-mac-based:
+    name: macos/x64+arm64 toolchain
     runs-on: [self-hosted, macOS, ARM64, FlipperZeroToolchainChmocker]
     steps:
       - name: 'Wipe workspace'

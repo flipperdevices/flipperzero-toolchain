@@ -138,7 +138,6 @@ function build_doxygen() {
 }
 
 
-
 copy_libudev
 
 case "${CMD}" in
@@ -159,6 +158,9 @@ case "${CMD}" in
         ;;
     "openocd")
         build_openocd;
+        ;;
+    "ffmpeg")
+        dl_ffmpeg;
         ;;
     *)
         die "$0: wrong build module ${CMD}"
