@@ -9,6 +9,9 @@ ADD "https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.14.0.tar.gz" .
 
 ADD "https://github.com/doxygen/doxygen/releases/download/Release_1_12_0/doxygen-1.12.0.src.tar.gz" .
 ADD "https://github.com/pffang/libiconv-for-Windows/releases/download/1.18/libiconv-for-Windows_prebuilt.zip" .
+
+ADD "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2025-05-22-13-52/ffmpeg-n7.1.1-17-g24de8a98cf-win64-gpl-7.1.zip" .
+
 #
 # Unpack && remove archives
 #
@@ -16,7 +19,10 @@ ADD "https://github.com/pffang/libiconv-for-Windows/releases/download/1.18/libic
 #
 
 RUN . /toolchain/src/buildvars.sh \
-    && mkdir -p /toolchain/src/src/{protobuf,libusb,hidapi,doxygen} \
+    && mkdir -p /toolchain/src/src/{protobuf,libusb,hidapi,doxygen,ffmpeg} \
+    && unzip ffmpeg-n7.1.1-17-g24de8a98cf-win64-gpl-7.1.zip -d /toolchain/src/src/ffmpeg/ \
+    && mkdir -p $WINDOWS_OUTPUT_ROOT/bin/ \
+    && cp /toolchain/src/src/ffmpeg/ffmpeg-n7.1.1-17-g24de8a98cf-win64-gpl-7.1/bin/ffmpeg $WINDOWS_OUTPUT_ROOT/bin/ \
     && tar --strip-component=1 -xf protobuf-cpp-3.21.7.tar.gz -C /toolchain/src/src/protobuf \
     && tar --strip-component=1 -xf libusb-1.0.24.tar.bz2 -C /toolchain/src/src/libusb \
     && tar --strip-component=1 -xf hidapi-0.14.0.tar.gz -C /toolchain/src/src/hidapi \

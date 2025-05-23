@@ -15,17 +15,24 @@ ADD "https://github.com/doxygen/doxygen/releases/download/Release_1_12_0/doxygen
 #
 
 RUN . /toolchain/src/buildvars.sh \
-    && mkdir -p /toolchain/src/src/{protobuf,libusb,hidapi,doxygen} \
-    && tar --strip-component=1 -xf protobuf-cpp-3.21.7.tar.gz -C /toolchain/src/src/protobuf \
-    && tar --strip-component=1 -xf libusb-1.0.24.tar.bz2 -C /toolchain/src/src/libusb \
-    && tar --strip-component=1 -xf hidapi-0.14.0.tar.gz -C /toolchain/src/src/hidapi \
-    && tar --strip-component=1 -xf doxygen-1.12.0.src.tar.gz -C /toolchain/src/src/doxygen \
-    && git clone https://github.com/flipperdevices/openocd.git /toolchain/src/src/openocd \
-    && cd /toolchain/src/src/openocd \
-    && git reset --hard 4b909a31d34167f3ef03ff6f70e6d5b4caa7928a \
-    && sed -i 's/https\:\/\/git.savannah.nongnu.org\/git\/git2cl.git/git:\/\/repo.or.cz\/git2cl.git/g' /toolchain/src/src/openocd/.gitmodules \
-    && git submodule update --init --recursive \
-    && find /toolchain/src/archives/ -type f -delete \
+    && case ${ARCH_TARGET} in \
+         "x86_64") cmd wget -q -O ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2025-05-22-13-52/ffmpeg-n7.1.1-17-g24de8a98cf-linux64-gpl-7.1.tar.xz ;; \
+         "aarch64") cmd wget -q -O ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2025-05-22-13-52/ffmpeg-n7.1.1-17-g24de8a98cf-linuxarm64-gpl-7.1.tar.xz ;; \
+    esac \
+    && cmd mkdir -p /toolchain/src/src/{protobuf,libusb,hidapi,doxygen,ffmpeg} \
+    && cmd tar --strip-component=1 -xf ffmpeg.tar.xz -C /toolchain/src/src/ffmpeg \
+    && cmd mkdir -p $LINUX_OUTPUT_ROOT/bin/ \
+    && cmd cp /toolchain/src/src/ffmpeg/bin/ffmpeg $LINUX_OUTPUT_ROOT/bin/ \
+    && cmd tar --strip-component=1 -xf protobuf-cpp-3.21.7.tar.gz -C /toolchain/src/src/protobuf \
+    && cmd tar --strip-component=1 -xf libusb-1.0.24.tar.bz2 -C /toolchain/src/src/libusb \
+    && cmd tar --strip-component=1 -xf hidapi-0.14.0.tar.gz -C /toolchain/src/src/hidapi \
+    && cmd tar --strip-component=1 -xf doxygen-1.12.0.src.tar.gz -C /toolchain/src/src/doxygen \
+    && cmd git clone https://github.com/flipperdevices/openocd.git /toolchain/src/src/openocd \
+    && cmd cd /toolchain/src/src/openocd \
+    && cmd git reset --hard 4b909a31d34167f3ef03ff6f70e6d5b4caa7928a \
+    && cmd sed -i 's/https\:\/\/git.savannah.nongnu.org\/git\/git2cl.git/git:\/\/repo.or.cz\/git2cl.git/g' /toolchain/src/src/openocd/.gitmodules \
+    && cmd git submodule update --init --recursive \
+    && cmd find /toolchain/src/archives/ -type f -delete \
 && echo "[#] build ... " \
     && /toolchain/src/build-linux-flipper-tools.sh protobuf \
     && /toolchain/src/build-linux-flipper-tools.sh libusb \

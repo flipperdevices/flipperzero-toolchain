@@ -10,7 +10,7 @@ click==8.1.7
 colorlog==6.8.2
 contextlib2==21.6.0
 crc==7.1.0
-cryptography==43.0.1
+cryptography==44.0.1
 dataclass-wizard==0.22.3
 ecdsa==0.19.0
 esptool==4.7.0
@@ -19,6 +19,7 @@ heatshrink2==0.13.0
 idna==3.7
 intelhex==2.3.0
 lxml==5.2.2
+lz4==4.4.4
 mypy==1.10.1
 mypy-extensions==1.0.0
 packaging==24.1
@@ -28,16 +29,17 @@ platformdirs==4.2.2
 protobuf==4.25.3
 pycparser==2.22
 pyelftools==0.31
+pypng==0.20220715.0
 pyserial==3.5
 PyYAML==6.0.1
 reedsolo==1.7.0
 requests==2.32.3
 schema==0.7.7
-SCons==4.8.1
+SCons==4.9.1
 six==1.16.0
 smmap==5.0.1
 typing_extensions==4.12.2
 urllib3==2.2.2
-setuptools==70.1.1
+setuptools==78.1.1
 mslex==1.2.0
 oslex==0.1.3
