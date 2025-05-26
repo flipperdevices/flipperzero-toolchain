@@ -14,14 +14,33 @@ ADD "https://github.com/doxygen/doxygen/releases/download/Release_1_12_0/doxygen
 # [!] savannah.nongnu.org often gives back error 502, which breaks the build. so we take the source from the developer repo.
 #
 
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    RUST_VERSION=1.87.0
+
 RUN . /toolchain/src/buildvars.sh \
     && case ${ARCH_TARGET} in \
          "x86_64") cmd wget -q -O ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2025-05-22-13-52/ffmpeg-n7.1.1-17-g24de8a98cf-linux64-gpl-7.1.tar.xz ;; \
          "aarch64") cmd wget -q -O ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2025-05-22-13-52/ffmpeg-n7.1.1-17-g24de8a98cf-linuxarm64-gpl-7.1.tar.xz ;; \
     esac \
+&& echo "[#] create rust environment" \
+    && cmd apt-get update \
+    && cmd apt-get install -y --no-install-recommends autoconf automake bzip2 default-libmysqlclient-dev dpkg-dev file g++ gcc imagemagick libbz2-dev libc6-dev libcurl4-openssl-dev libdb-dev libevent-dev libffi-dev libgdbm-dev libglib2.0-dev libgmp-dev libjpeg-dev libkrb5-dev liblzma-dev libmagickcore-dev libmagickwand-dev libmaxminddb-dev libncurses5-dev libncursesw5-dev libpng-dev libpq-dev libreadline-dev libsqlite3-dev libssl-dev libtool libwebp-dev libxml2-dev libxslt-dev libyaml-dev make patch unzip xz-utils zlib1g-dev \
+    && case ${ARCH_TARGET} in \
+         "x86_64") rustArch="x86_64-unknown-linux-gnu" ;; \
+         "aarch64") rustArch="aarch64-unknown-linux-gnu" ;; \
+    esac \
+    && cmd wget -q -O rustup-init https://static.rust-lang.org/rustup/archive/1.28.2/${rustArch}/rustup-init \
+    && chmod a+x rustup-init \
+    && ./rustup-init -y --no-modify-path --profile minimal --default-toolchain $RUST_VERSION --default-host ${rustArch} \
+    && cmd rustup --version \
+    && cmd cargo --version \
+    && cmd rustc --version \
+&& echo "[#] build tools" \
     && cmd mkdir -p /toolchain/src/src/{protobuf,libusb,hidapi,doxygen,ffmpeg} \
-    && cmd tar --strip-component=1 -xf ffmpeg.tar.xz -C /toolchain/src/src/ffmpeg \
     && cmd mkdir -p $LINUX_OUTPUT_ROOT/bin/ \
+    && cmd tar --strip-component=1 -xf ffmpeg.tar.xz -C /toolchain/src/src/ffmpeg \
     && cmd cp /toolchain/src/src/ffmpeg/bin/ffmpeg $LINUX_OUTPUT_ROOT/bin/ \
     && cmd tar --strip-component=1 -xf protobuf-cpp-3.21.7.tar.gz -C /toolchain/src/src/protobuf \
     && cmd tar --strip-component=1 -xf libusb-1.0.24.tar.bz2 -C /toolchain/src/src/libusb \
@@ -39,6 +58,12 @@ RUN . /toolchain/src/buildvars.sh \
     && /toolchain/src/build-linux-flipper-tools.sh libhidapi \
     && /toolchain/src/build-linux-flipper-tools.sh openocd \
     && /toolchain/src/build-linux-flipper-tools.sh doxygen \
+&& echo "[#] build pngquant " \
+    && cmd git clone --recursive https://github.com/kornelski/pngquant.git /toolchain/src/src/pngquant \
+    && cmd pushd /toolchain/src/src/pngquant \
+    && cmd cargo build --release \
+    && cmd cp /toolchain/src/src/pngquant/target/release/pngquant $LINUX_OUTPUT_ROOT/bin/ \
+    && popd \
     && . /toolchain/src/buildvars.sh \
 && echo "[#] cleanup ... " \
     && cleanup_after_build
