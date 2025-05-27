@@ -243,7 +243,7 @@ function build_hidapi_x86_64() {
         LDFLAGS="$MAC_X86_64_FLAGS" \
         DYLD_LIBRARY_PATH="$MAC_X86_64_OUTPUT_ROOT/lib" \
         PATH="$MAC_X86_64_OUTPUT_ROOT/bin:$PATH" \
-        cmake \
+        /opt/homebrew/bin/cmake \
             -S "/toolchain/src/src/hidapi" \
             "-DLLVM_EXTERNAL_PROJECTS=clang" \
             "-DCMAKE_OSX_ARCHITECTURES=x86_64" \
@@ -270,7 +270,7 @@ function build_hidapi_arm64() {
         LDFLAGS="$MAC_ARM64_FLAGS" \
         DYLD_LIBRARY_PATH="$MAC_ARM64_OUTPUT_ROOT/lib" \
         PATH="$MAC_ARM64_OUTPUT_ROOT/bin:$PATH" \
-        cmake \
+        /opt/homebrew/bin/cmake \
             -S "/toolchain/src/src/hidapi" \
             "-DLLVM_EXTERNAL_PROJECTS=clang" \
             "-DCMAKE_OSX_ARCHITECTURES=arm64" \

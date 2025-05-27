@@ -6,28 +6,44 @@ ADD https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.14.0.tar.gz /too
 ADD https://github.com/doxygen/doxygen/releases/download/Release_1_12_0/doxygen-1.12.0.src.tar.gz /toolchain/src/archives/
 
 #https://www.videohelp.com/software/ffmpeg
-ADD https://www.videohelp.com/download/ffmpeg-7.1.1-macos64-static.7z /toolchain/src/archives/
-ADD https://www.videohelp.com/download/ffmpeg-7.1.1-macosarm-static.zip /toolchain/src/archives/
+
+ADD scripts/build-mac-flipper-tools.sh /toolchain/src/
 
 RUN /bin/zsh -c "cd /toolchain/src/archives \
+    && curl -o rustup-init https://static.rust-lang.org/rustup/archive/1.28.2/x86_64-apple-darwin/rustup-init \
+    && chmod a+x ./rustup-init \
+    && mkdir -p /var/root \
+    && sudo -i /toolchain/src/archives/rustup-init -y --no-modify-path --profile minimal --default-toolchain 1.87.0 --default-host x86_64-apple-darwin \
+    && sudo -i /var/root/.cargo/bin/rustup target add aarch64-apple-darwin"
+
+RUN /bin/zsh -c "cd /toolchain/src/archives \
+    && curl -L --referer https://www.videohelp.com/download/ffmpeg-7.1.1-macos64-static.7z https://www.videohelp.com/download/ffmpeg-7.1.1-macos64-static.7z --output ffmpeg-7.1.1-macos64-static.7z \
+    && curl -L --referer https://www.videohelp.com/download/ffmpeg-7.1.1-macosarm-static.zip https://www.videohelp.com/download/ffmpeg-7.1.1-macosarm-static.zip --output ffmpeg-7.1.1-macosarm-static.zip \
     && mkdir -p /toolchain/src/src/{protobuf,libusb,hidapi,doxygen,ffmpeg} \
     && mkdir -p /toolchain/mac-x86_64-output-root/bin \
     && mkdir -p /toolchain/mac-arm64-output-root/bin \
     && unzip /toolchain/src/archives/ffmpeg-7.1.1-macosarm-static.zip ffmpeg -d /toolchain/mac-arm64-output-root/bin/ \
-    && 7z x ffmpeg-7.1.1-macos64-static.7z ffmpeg -o/toolchain/mac-x86_64-output-root/bin/
+    && 7z x ffmpeg-7.1.1-macos64-static.7z ffmpeg -o/toolchain/mac-x86_64-output-root/bin/ \
     && tar --strip-component=1 -xf protobuf-cpp-3.21.7.tar.gz -C /toolchain/src/src/protobuf \
     && tar --strip-component=1 -xf libusb-1.0.24.tar.bz2 -C /toolchain/src/src/libusb \
     && tar --strip-component=1 -xf hidapi-0.14.0.tar.gz -C /toolchain/src/src/hidapi \
     && tar --strip-component=1 -xf doxygen-1.12.0.src.tar.gz -C /toolchain/src/src/doxygen"
 
+RUN /bin/zsh -c "echo '[#] build pngquant' \
+    && git clone --recursive https://github.com/kornelski/pngquant.git /toolchain/src/src/pngquant \
+    && sudo -i -- /bin/bash -c 'cd /toolchain/src/src/pngquant && export TMPDIR=/toolchain/src/src/pngquant && export PATH=/var/root/.cargo/bin:$PATH && cargo build --release --target x86_64-apple-darwin && cargo build --release --target aarch64-apple-darwin' \
+    && cp /toolchain/src/src/pngquant/target/x86_64-apple-darwin/release/pngquant /toolchain/mac-x86_64-output-root/bin/ \
+    && cp /toolchain/src/src/pngquant/target/aarch64-apple-darwin/release/pngquant /toolchain/mac-arm64-output-root/bin/"
+
 RUN /bin/zsh -c "git clone https://github.com/flipperdevices/openocd.git /toolchain/src/src/openocd \
     && cd /toolchain/src/src/openocd \
     && git reset --hard 4b909a31d34167f3ef03ff6f70e6d5b4caa7928a \
-    && sed -i 's/https\:\/\/git.savannah.nongnu.org\/git\/git2cl.git/git:\/\/repo.or.cz\/git2cl.git/g' /toolchain/src/src/openocd/.gitmodules \
+    && sed -i'' -e 's/https\:\/\/git.savannah.nongnu.org\/git\/git2cl.git/git:\/\/repo.or.cz\/git2cl.git/g' /toolchain/src/src/openocd/.gitmodules \
     && git submodule update --init --recursive"
 
 RUN /bin/zsh -c "export PATH=\"$(brew --prefix bison)/bin:$PATH\" \
+    && export CMAKE_POLICY_VERSION_MINIMUM=3.5 \
     && /toolchain/src/build-mac-flipper-tools.sh"
 
-RUN /bin/zsh -c "relink.sh /toolchain/mac-x86_64-output-root"
-RUN /bin/zsh -c "relink.sh /toolchain/mac-arm64-output-root"
+RUN /bin/bash -c "relink.sh /toolchain/mac-x86_64-output-root"
+RUN /bin/bash -c "relink.sh /toolchain/mac-arm64-output-root"

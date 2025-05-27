@@ -29,5 +29,6 @@ RUN /bin/zsh -c "/toolchain/mac-x86_64-output-root/bin/python3 -m pip install --
 RUN /bin/zsh -c "relink.sh /toolchain/mac-x86_64-output-root"
 RUN /bin/zsh -c "relink.sh /toolchain/mac-arm64-output-root"
 
-RUN /bin/zsh strip.sh
-RUN /bin/zsh fix_python_scripts_shebang.sh
+RUN /bin/bash -c /usr/bin/strip.sh
+RUN /bin/bash -c /usr/bin/fix_python_scripts_shebang.sh
+
